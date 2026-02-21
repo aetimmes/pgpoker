@@ -2,483 +2,526 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>Pai Gow Poker</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <script src="/socket.io/socket.io.js"></script>
 <style>
-:root {
-  --felt: #1a4a2e;
-  --felt-light: #1f5534;
-  --felt-dark: #122e1d;
-  --gold: #c9a84c;
-  --gold-light: #f0d080;
-  --gold-dark: #8a6a20;
-  --cream: #f5edd8;
-  --red: #c0392b;
-  --black: #0d0d0d;
-  --shadow: 0 8px 32px rgba(0,0,0,0.6);
-  --glow: 0 0 20px rgba(201,168,76,0.4);
+:root{
+  --gold:#c9a84c;--gold-l:#f0d080;--gold-d:#8a6a20;
+  --felt:#1a5230;--felt-d:#0d2e1a;--felt-l:#226040;
+  --cream:#f5edd8;--shadow:0 8px 32px rgba(0,0,0,.65);
+  --glow:0 0 18px rgba(201,168,76,.4);
 }
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; background: var(--black); }
-body {
-  font-family: 'EB Garamond', serif;
-  color: var(--cream);
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#060a06}
+body{font-family:'EB Garamond',serif;color:var(--cream)}
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* ── BUTTONS ─────────────────────────────────────────────── */
+.btn{font-family:'Cinzel',serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;
+  padding:7px 14px;border:1px solid var(--gold-d);
+  background:linear-gradient(180deg,#2a1f08,#1a1208);
+  color:var(--gold);cursor:pointer;border-radius:3px;transition:all .2s;white-space:nowrap}
+.btn:hover{background:linear-gradient(180deg,#3a2a0a,#2a1f08);border-color:var(--gold);
+  color:var(--gold-l);box-shadow:var(--glow)}
+.btn-primary{background:linear-gradient(180deg,#b8922a,#8a6a18);border-color:var(--gold);color:#fff;font-weight:700}
+.btn-primary:hover{background:linear-gradient(180deg,#c9a84c,#a07820)}
+.btn-danger{background:linear-gradient(180deg,#5a1010,#3a0808);border-color:#8a2020;color:#f08080}
+.btn-lg{font-size:13px;padding:10px 24px}
+.btn-sm{font-size:10px;padding:4px 10px}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+.btn-reveal{background:linear-gradient(180deg,#1a4a6a,#0d2a40);border-color:#4a8ab0;
+  color:#90d0f0;font-size:12px;padding:8px 18px;letter-spacing:1.5px;
+  box-shadow:0 0 14px rgba(74,138,176,.3)}
+.btn-reveal:hover{background:linear-gradient(180deg,#2a6a9a,#1a4a6a);border-color:#6ab0d8;
+  box-shadow:0 0 22px rgba(74,138,176,.5)}
+
+/* ── SCREENS ─────────────────────────────────────────────── */
+.screen{display:none;flex-direction:column;flex:1;overflow:hidden}
+.screen.active{display:flex}
+
+/* ── LOBBY ───────────────────────────────────────────────── */
+#lobby-screen{align-items:center;justify-content:center;padding:16px;overflow-y:auto;
+  background:radial-gradient(ellipse at 50% 0%,#2a6040,transparent 60%),#0d1a0a}
+.lobby-box{background:linear-gradient(160deg,#0f2a18,#0a1a0f);border:1px solid var(--gold-d);
+  border-radius:8px;padding:28px;width:100%;max-width:500px;box-shadow:var(--shadow);position:relative}
+.lobby-box::before{content:'';position:absolute;inset:4px;border:1px solid rgba(201,168,76,.1);border-radius:5px;pointer-events:none}
+.logo-title{font-family:'Cinzel Decorative',serif;font-size:22px;color:var(--gold);text-align:center;
+  text-shadow:0 0 20px rgba(201,168,76,.5);margin-bottom:4px}
+.logo-sub{font-size:13px;color:rgba(245,237,216,.4);text-align:center;font-style:italic;margin-bottom:22px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.3),transparent);margin:18px 0}
+.tab-row{display:flex;gap:8px;margin-bottom:18px}
+.tab{flex:1;padding:9px;text-align:center;cursor:pointer;font-family:'Cinzel',serif;font-size:11px;
+  letter-spacing:1px;text-transform:uppercase;border:1px solid rgba(201,168,76,.2);border-radius:4px;
+  color:rgba(201,168,76,.5);transition:all .2s}
+.tab.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.08)}
+.tab-content{display:none}.tab-content.active{display:block}
+.form-group{margin-bottom:14px}
+label{display:block;font-family:'Cinzel',serif;font-size:11px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+input[type=text],input[type=number]{width:100%;background:rgba(0,0,0,.4);
+  border:1px solid rgba(201,168,76,.3);border-radius:4px;color:var(--cream);
+  font-family:'EB Garamond',serif;font-size:16px;padding:10px 14px;outline:none;transition:border-color .2s}
+input:focus{border-color:var(--gold)}
+.chip-presets{display:flex;gap:8px;flex-wrap:wrap}
+.chip-preset{flex:1;min-width:55px;text-align:center;padding:8px;background:rgba(0,0,0,.3);
+  border:1px solid rgba(201,168,76,.2);border-radius:4px;cursor:pointer;font-family:'Cinzel',serif;
+  font-size:11px;color:rgba(245,237,216,.6);transition:all .2s}
+.chip-preset:hover,.chip-preset.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.1)}
+.bonus-payout-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.bonus-payout-row{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.25);
+  border:1px solid rgba(160,80,200,.15);border-radius:4px;padding:5px 8px}
+.bonus-hand-name{font-size:11px;color:rgba(245,237,216,.7);flex:1;white-space:nowrap}
+.bonus-payout-row input{width:52px;text-align:center;padding:3px 5px;font-size:13px}
+.bonus-x{font-family:'Cinzel',serif;font-size:10px;color:#c080f0}
+.room-code-display{text-align:center;padding:16px 0}
+.room-code-label{font-family:'Cinzel',serif;font-size:11px;letter-spacing:1px;
+  text-transform:uppercase;color:rgba(201,168,76,.5);margin-bottom:8px}
+.room-code{font-family:'Cinzel Decorative',serif;font-size:44px;font-weight:700;color:var(--gold);
+  letter-spacing:12px;text-shadow:0 0 30px rgba(201,168,76,.4)}
+.waiting-player{display:flex;align-items:center;gap:8px;padding:8px 12px;
+  background:rgba(0,0,0,.2);border:1px solid rgba(201,168,76,.1);border-radius:4px;margin-bottom:6px}
+.waiting-player-name{font-family:'Cinzel',serif;font-size:13px;color:var(--cream);flex:1}
+.host-badge{font-family:'Cinzel',serif;font-size:9px;padding:2px 7px;
+  background:rgba(201,168,76,.15);border:1px solid var(--gold-d);color:var(--gold);border-radius:10px}
+.me-badge{font-family:'Cinzel',serif;font-size:9px;padding:2px 6px;
+  background:rgba(41,128,185,.2);border:1px solid rgba(41,128,185,.5);color:#7ac0e8;border-radius:10px}
+.join-code-row{display:flex;gap:8px}
+.join-code-row input{flex:1;text-transform:uppercase;letter-spacing:4px;font-size:20px;text-align:center}
+
+/* ── GAME SCREEN ─────────────────────────────────────────── */
+#game-screen{background:#060a06}
+header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px solid var(--gold-d);
+  padding:5px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.logo{font-family:'Cinzel Decorative',serif;font-size:clamp(12px,2.5vw,18px);color:var(--gold);letter-spacing:2px}
+.logo span{color:var(--gold-l)}
+.room-badge{font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;color:rgba(201,168,76,.45)}
+.phase-badge{font-family:'Cinzel',serif;font-size:10px;padding:3px 10px;border-radius:12px;
+  letter-spacing:1px;text-transform:uppercase}
+.phase-bet{background:rgba(39,174,96,.2);border:1px solid #27ae60;color:#5dde8a}
+.phase-set{background:rgba(201,168,76,.2);border:1px solid var(--gold);color:var(--gold-l)}
+.phase-done{background:rgba(192,57,43,.2);border:1px solid #c0392b;color:#f08080}
+.phase-lobby{background:rgba(128,128,128,.2);border:1px solid #888;color:#bbb}
+.header-right{display:flex;gap:6px;margin-left:auto}
+
+/* ══════════════════════════════════════════════════════════
+   CASINO TABLE
+══════════════════════════════════════════════════════════ */
+.table-wrap{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:8px 10px 0;min-height:0}
+
+/* The oval table surface */
+.casino-table{
+  flex:1;min-height:0;position:relative;
+  /* Oval via border-radius */
   background:
-    radial-gradient(ellipse at 50% 0%, #2a6040 0%, transparent 60%),
-    radial-gradient(ellipse at 0% 100%, #183020 0%, transparent 50%),
-    radial-gradient(ellipse at 100% 100%, #183020 0%, transparent 50%),
-    var(--felt-dark);
-  min-height: 100vh;
+    radial-gradient(ellipse at 50% 35%,#236b3e 0%,#1a5230 40%,#103020 75%,#08180e 100%);
+  border-radius:50% / 38%;
+  border:6px solid #0a1a0e;
+  box-shadow:
+    0 0 0 3px #1a2a1a,
+    0 0 0 6px #0a0f0a,
+    inset 0 0 80px rgba(0,0,0,.45),
+    0 12px 60px rgba(0,0,0,.8);
+  display:flex;flex-direction:column;
+  overflow:hidden;
 }
-#app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-/* ─── BUTTONS ─── */
-.btn {
-  font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 1px;
-  text-transform: uppercase; padding: 7px 14px;
-  border: 1px solid var(--gold-dark);
-  background: linear-gradient(180deg, #2a1f08, #1a1208);
-  color: var(--gold); cursor: pointer; border-radius: 3px;
-  transition: all 0.2s; white-space: nowrap; user-select: none;
+/* Rail line inside the felt */
+.casino-table::before{
+  content:'';position:absolute;
+  inset:10px;
+  border:2px solid rgba(201,168,76,.1);
+  border-radius:50% / 38%;
+  pointer-events:none;z-index:0;
 }
-.btn:hover { background: linear-gradient(180deg, #3a2a0a, #2a1f08); border-color: var(--gold); color: var(--gold-light); box-shadow: var(--glow); }
-.btn:active { transform: translateY(1px); }
-.btn-primary { background: linear-gradient(180deg, #b8922a, #8a6a18); border-color: var(--gold); color: #fff; font-weight: 700; }
-.btn-primary:hover { background: linear-gradient(180deg, #c9a84c, #a07820); }
-.btn-danger { background: linear-gradient(180deg, #5a1010, #3a0808); border-color: #8a2020; color: #f08080; }
-.btn-danger:hover { background: linear-gradient(180deg, #7a1515, #5a1010); border-color: #c03030; }
-.btn-lg { font-size: 13px; padding: 10px 24px; }
-.btn-sm { font-size: 10px; padding: 4px 10px; }
-.btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 
-/* ─── SCREENS ─── */
-.screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
-.screen.active { display: flex; }
+/* Watermark */
+.felt-watermark{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Cinzel Decorative',serif;font-size:clamp(14px,2vw,22px);
+  color:rgba(201,168,76,.06);letter-spacing:4px;text-transform:uppercase;
+  pointer-events:none;white-space:nowrap;z-index:0;
+}
 
-/* ─── LOBBY / SETUP SCREEN ─── */
-#lobby-screen {
-  align-items: center; justify-content: center;
-  padding: 20px; overflow-y: auto;
+/* ── DEALER BOOTH ──────────────────────────────────────── */
+.dealer-booth{
+  flex-shrink:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.25) 100%);
+  border-bottom:3px solid var(--gold-d);
+  /* curved top rail */
+  border-radius:50% 50% 0 0 / 60% 60% 0 0;
+  padding:8px 18% 10px;
+  text-align:center;
+  position:relative;z-index:2;
 }
-.lobby-box {
-  background: linear-gradient(160deg, #0f2a18, #0a1a0f);
-  border: 1px solid var(--gold-dark); border-radius: 8px;
-  padding: 32px; width: 100%; max-width: 480px;
-  box-shadow: var(--shadow), 0 0 60px rgba(0,0,0,0.5) inset;
-  position: relative;
+.dealer-booth::after{
+  content:'';position:absolute;
+  bottom:-2px;left:10%;right:10%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
 }
-.lobby-box::before {
-  content:''; position:absolute; inset:4px;
-  border:1px solid rgba(201,168,76,0.15); border-radius:5px; pointer-events:none;
+.dealer-label{
+  font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(201,168,76,.35);margin-bottom:5px;
 }
-.logo-title {
-  font-family: 'Cinzel Decorative', serif; font-size: 22px;
-  color: var(--gold); text-align: center;
-  text-shadow: 0 0 20px rgba(201,168,76,0.5), 0 2px 4px rgba(0,0,0,0.8);
-  margin-bottom: 4px;
-}
-.logo-sub { font-size: 13px; color: rgba(245,237,216,0.4); text-align: center; font-style: italic; margin-bottom: 24px; }
-.divider { height:1px; background:linear-gradient(90deg,transparent,rgba(201,168,76,0.3),transparent); margin:20px 0; }
-.tab-row { display:flex; gap:8px; margin-bottom:20px; }
-.tab {
-  flex:1; padding:9px; text-align:center; cursor:pointer;
-  font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; text-transform:uppercase;
-  border:1px solid rgba(201,168,76,0.2); border-radius:4px; color:rgba(201,168,76,0.5);
-  transition:all 0.2s;
-}
-.tab.active { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,0.08); }
-.tab-content { display:none; }
-.tab-content.active { display:block; }
-.form-group { margin-bottom:16px; }
-label {
-  display:block; font-family:'Cinzel',serif; font-size:11px;
-  letter-spacing:1px; text-transform:uppercase; color:var(--gold); margin-bottom:6px;
-}
-input[type="text"], input[type="number"] {
-  width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(201,168,76,0.3);
-  border-radius:4px; color:var(--cream); font-family:'EB Garamond',serif;
-  font-size:16px; padding:10px 14px; outline:none; transition:border-color 0.2s;
-}
-input:focus { border-color:var(--gold); }
-.chip-presets { display:flex; gap:8px; flex-wrap:wrap; }
-.chip-preset {
-  flex:1; min-width:60px; text-align:center; padding:8px;
-  background:rgba(0,0,0,0.3); border:1px solid rgba(201,168,76,0.2); border-radius:4px;
-  cursor:pointer; font-family:'Cinzel',serif; font-size:11px; color:rgba(245,237,216,0.6);
-  transition:all 0.2s;
-}
-.chip-preset:hover, .chip-preset.active { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,0.1); }
-.bonus-payout-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.bonus-payout-row {
-  display:flex; align-items:center; gap:6px;
-  background:rgba(0,0,0,0.25); border:1px solid rgba(160,80,200,0.15);
-  border-radius:5px; padding:6px 10px;
-}
-.bonus-hand-name { font-size:12px; color:rgba(245,237,216,0.7); flex:1; white-space:nowrap; }
-.bonus-payout-row input { width:58px; text-align:center; padding:4px 6px; font-size:13px; }
-.bonus-x { font-family:'Cinzel',serif; font-size:10px; color:#c080f0; }
-.room-code-display {
-  text-align:center; padding:20px 0;
-}
-.room-code-label { font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:rgba(201,168,76,0.5); margin-bottom:8px; }
-.room-code {
-  font-family:'Cinzel Decorative',serif; font-size:44px; font-weight:700;
-  color:var(--gold); letter-spacing:12px; text-shadow:0 0 30px rgba(201,168,76,0.4);
-}
-.waiting-players { margin-top:16px; }
-.waiting-player {
-  display:flex; align-items:center; gap:8px; padding:8px 12px;
-  background:rgba(0,0,0,0.2); border:1px solid rgba(201,168,76,0.1);
-  border-radius:4px; margin-bottom:6px;
-}
-.waiting-player-name { font-family:'Cinzel',serif; font-size:13px; color:var(--cream); flex:1; }
-.host-badge {
-  font-family:'Cinzel',serif; font-size:9px; padding:2px 7px;
-  background:rgba(201,168,76,0.15); border:1px solid var(--gold-dark);
-  color:var(--gold); border-radius:10px; letter-spacing:0.5px;
-}
-.join-code-row { display:flex; gap:8px; }
-.join-code-row input { flex:1; text-transform:uppercase; letter-spacing:4px; font-size:20px; text-align:center; }
+.dealer-seat-row{display:flex;justify-content:center}
 
-/* ─── GAME SCREEN ─── */
-#game-screen { flex:1; display:none; flex-direction:column; overflow:hidden; }
-#game-screen.active { display:flex; }
-header {
-  background:linear-gradient(180deg, #0d0d0d 0%, #1a1208 100%);
-  border-bottom:2px solid var(--gold-dark); padding:6px 12px;
-  display:flex; align-items:center; gap:8px; flex-shrink:0;
-  position:relative; flex-wrap:wrap;
+/* ── PLAYER ARC ──────────────────────────────────────── */
+.player-arc{
+  flex:1;min-height:0;overflow-y:auto;
+  padding:8px 6px 6px;
+  display:flex;flex-wrap:wrap;gap:6px;
+  align-content:flex-start;
+  justify-content:center;
+  position:relative;z-index:2;
 }
-header::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
-.logo { font-family:'Cinzel Decorative',serif; font-size:clamp(13px,3vw,20px); color:var(--gold); text-shadow:0 0 20px rgba(201,168,76,0.5); letter-spacing:2px; }
-.logo span { color:var(--gold-light); }
-.room-badge { font-family:'Cinzel',serif; font-size:11px; letter-spacing:2px; color:rgba(201,168,76,0.5); }
-.header-right { display:flex; gap:6px; margin-left:auto; }
-.phase-badge { font-family:'Cinzel',serif; font-size:10px; padding:3px 10px; border-radius:12px; letter-spacing:1px; text-transform:uppercase; }
-.phase-bet    { background:rgba(39,174,96,0.2);   border:1px solid #27ae60; color:#5dde8a; }
-.phase-set    { background:rgba(201,168,76,0.2);   border:1px solid var(--gold); color:var(--gold-light); }
-.phase-reveal { background:rgba(192,57,43,0.2);    border:1px solid #c0392b; color:#f08080; }
-.phase-lobby  { background:rgba(128,128,128,0.2);  border:1px solid #888; color:#bbb; }
 
-.table-area { flex:1; overflow-y:auto; overflow-x:hidden; padding:10px; display:flex; flex-direction:column; gap:8px; }
+/* ── SEAT CARD ───────────────────────────────────────── */
+.seat{
+  background:rgba(0,0,0,.38);border:1px solid rgba(201,168,76,.14);
+  border-radius:10px;padding:7px 10px;
+  transition:border-color .3s,box-shadow .3s;
+  min-width:220px;max-width:340px;flex:1;
+}
+.seat.is-me{border-color:rgba(41,128,185,.5);background:rgba(15,35,70,.28)}
+.seat.is-banker{border-color:rgba(201,168,76,.5);background:rgba(35,25,0,.38);
+  box-shadow:0 0 12px rgba(201,168,76,.15)}
+.seat.folded{opacity:.4}
+.seat.winner{border-color:#27ae60;box-shadow:0 0 12px rgba(39,174,96,.3);
+  animation:win-pulse 1s ease 2}
+.seat.loser{border-color:#c0392b}
+.seat.push-res{border-color:#888}
+@keyframes win-pulse{
+  0%,100%{box-shadow:0 0 12px rgba(39,174,96,.3)}
+  50%{box-shadow:0 0 28px rgba(39,174,96,.7)}
+}
 
-/* ─── PLAYER SEAT ─── */
-.player-seat {
-  background:linear-gradient(135deg, rgba(15,42,24,0.9), rgba(10,26,15,0.9));
-  border:1px solid rgba(201,168,76,0.2); border-radius:8px; padding:10px 12px;
-  transition:all 0.3s; position:relative;
+/* Flip animation for reveal */
+.seat.being-revealed{animation:card-flip .5s ease}
+@keyframes card-flip{
+  0%{transform:rotateY(90deg);opacity:0}
+  100%{transform:rotateY(0deg);opacity:1}
 }
-.player-seat.is-me { border-color:rgba(41,128,185,0.5); }
-.player-seat.is-banker { border-color:var(--gold); box-shadow:0 0 16px rgba(201,168,76,0.2); }
-.player-seat.folded { opacity:0.5; }
-.player-seat.disconnected { opacity:0.35; }
-.player-seat.winner-seat { border-color:#27ae60; box-shadow:0 0 16px rgba(39,174,96,0.3); }
-.player-seat.loser-seat  { border-color:#c0392b; box-shadow:0 0 8px rgba(192,57,43,0.2); }
-.player-seat.push-seat   { border-color:#888; }
-.me-badge {
-  font-family:'Cinzel',serif; font-size:9px; padding:2px 6px;
-  background:rgba(41,128,185,0.2); border:1px solid rgba(41,128,185,0.5);
-  color:#7ac0e8; border-radius:10px;
-}
-.seat-header { display:flex; align-items:center; gap:6px; margin-bottom:6px; flex-wrap:wrap; }
-.seat-name { font-family:'Cinzel',serif; font-size:13px; color:var(--gold); flex:1; min-width:80px; }
-.dealer-btn {
-  background:linear-gradient(180deg,#d4a017,#8a6010); color:#fff;
-  font-family:'Cinzel',serif; font-size:9px; padding:2px 7px; border-radius:10px;
-  letter-spacing:1px; border:1px solid var(--gold-light);
-}
-.chips-display { font-size:13px; color:var(--cream); }
-.chips-display .amount { color:var(--gold-light); font-weight:600; }
-.buyin-btn {
-  font-family:'Cinzel',serif; font-size:9px; letter-spacing:0.5px; text-transform:uppercase;
-  padding:3px 8px; border:1px solid rgba(201,168,76,0.3); background:rgba(0,0,0,0.3);
-  color:rgba(201,168,76,0.7); border-radius:3px; cursor:pointer; transition:all 0.15s;
-}
-.buyin-btn:hover { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,0.08); }
-.result-tag { font-family:'Cinzel',serif; font-size:10px; padding:2px 8px; border-radius:3px; letter-spacing:0.5px; }
-.result-win  { background:rgba(39,174,96,0.2);   border:1px solid #27ae60; color:#5dde8a; }
-.result-lose { background:rgba(192,57,43,0.2);    border:1px solid #c0392b; color:#f08080; }
-.result-push { background:rgba(128,128,128,0.2);  border:1px solid #888;    color:#bbb; }
-.result-fold { background:rgba(128,128,128,0.1);  border:1px solid #555;    color:#888; }
-.net-chips { font-family:'Cinzel',serif; font-size:12px; font-weight:700; }
-.net-pos { color:#5dde8a; }
-.net-neg { color:#f08080; }
-.net-zero { color:#888; }
-.seat-body { display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; }
-.set-status { font-size:12px; color:#5dde8a; font-style:italic; }
-.not-playing { font-size:12px; color:rgba(245,237,216,0.3); font-style:italic; }
 
-/* ─── BETTING ─── */
-.bet-area { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.bet-display { font-family:'Cinzel',serif; font-size:12px; color:var(--cream); min-width:60px; }
-.bet-display .val { color:#f0d080; font-weight:600; }
-.chip-stack { display:flex; gap:4px; align-items:center; }
-.chip {
-  width:32px; height:32px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-family:'Cinzel',serif; font-size:8px; font-weight:700; cursor:pointer;
-  border:3px solid rgba(255,255,255,0.2);
-  box-shadow:0 2px 6px rgba(0,0,0,0.5),0 0 0 1px rgba(0,0,0,0.3);
-  transition:transform 0.15s; user-select:none; color:#fff;
-  text-shadow:0 1px 2px rgba(0,0,0,0.8); position:relative;
-}
-.chip::before { content:''; position:absolute; inset:4px; border-radius:50%; border:1px dashed rgba(255,255,255,0.3); }
-.chip:hover { transform:translateY(-2px) scale(1.05); }
-.chip:active { transform:translateY(0) scale(0.98); }
-.chip-1   { background:radial-gradient(circle at 35% 35%, #b0b0b0, #505050); }
-.chip-5   { background:radial-gradient(circle at 35% 35%, #e05050, #8a1010); border-color:rgba(255,180,180,0.3); }
-.chip-25  { background:radial-gradient(circle at 35% 35%, #4090e0, #1040a0); border-color:rgba(150,200,255,0.3); }
-.chip-100 { background:radial-gradient(circle at 35% 35%, #303030, #080808); border-color:rgba(255,255,255,0.15); }
-.chip-500 { background:radial-gradient(circle at 35% 35%, #6040d0, #2010a0); border-color:rgba(180,150,255,0.3); }
-.clear-bet-btn {
-  font-size:10px; padding:4px 8px; background:rgba(0,0,0,0.3);
-  border:1px solid rgba(192,57,43,0.4); color:#f08080; border-radius:3px;
-  cursor:pointer; font-family:'Cinzel',serif; letter-spacing:0.5px; transition:all 0.15s;
-}
-.clear-bet-btn:hover { background:rgba(192,57,43,0.2); border-color:#c0392b; }
-.bonus-bet-area {
-  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
-  padding:6px 10px; background:rgba(160,80,200,0.08);
-  border:1px solid rgba(160,80,200,0.25); border-radius:6px; margin-top:6px;
-}
-.bonus-label { font-family:'Cinzel',serif; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#c080f0; }
-.bonus-bet-display { font-family:'Cinzel',serif; font-size:12px; color:var(--cream); min-width:60px; }
-.bonus-bet-display .val { color:#e0a8ff; font-weight:600; }
-.bonus-result-tag { font-family:'Cinzel',serif; font-size:10px; padding:2px 8px; border-radius:3px; letter-spacing:0.5px; }
-.bonus-win  { background:rgba(39,174,96,0.15);  border:1px solid #27ae60; color:#80f0a0; }
-.bonus-lose { background:rgba(128,128,128,0.1); border:1px solid #555;    color:#888; }
+.seat-header{display:flex;align-items:center;gap:5px;margin-bottom:5px;flex-wrap:wrap}
+.seat-name{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.banker-chip{background:linear-gradient(180deg,#d4a017,#8a6010);color:#fff;
+  font-family:'Cinzel',serif;font-size:8px;padding:2px 6px;border-radius:10px;
+  border:1px solid var(--gold-l);white-space:nowrap;letter-spacing:.5px}
+.chips-display{font-size:11px;white-space:nowrap}
+.chips-display .amount{color:var(--gold-l);font-weight:600}
+.buyin-btn{font-family:'Cinzel',serif;font-size:9px;padding:2px 7px;
+  border:1px solid rgba(201,168,76,.3);background:rgba(0,0,0,.3);
+  color:rgba(201,168,76,.7);border-radius:3px;cursor:pointer;transition:all .15s}
+.buyin-btn:hover{border-color:var(--gold);color:var(--gold)}
 
-/* ─── CARDS ─── */
-.card {
-  width:38px; height:54px; border-radius:5px; background:#fff;
-  border:1px solid rgba(0,0,0,0.2); box-shadow:0 2px 6px rgba(0,0,0,0.5);
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  font-size:12px; font-weight:700; user-select:none; position:relative;
-  font-family:'EB Garamond',serif; flex-shrink:0;
-}
-.card.clickable { cursor:pointer; transition:transform 0.15s, box-shadow 0.15s; }
-.card.clickable:hover { transform:translateY(-4px); box-shadow:0 6px 16px rgba(0,0,0,0.6); }
-.card.selected { transform:translateY(-8px)!important; box-shadow:0 8px 20px rgba(41,128,185,0.7)!important; outline:2px solid #2980b9; }
-.card.red { color:#c0392b; }
-.card.black { color:#111; }
-.card.back { background:linear-gradient(135deg,#0d2a8a,#1a4ab0); border-color:rgba(255,255,255,0.1); }
-.card.back::after { content:'🂠'; font-size:24px; color:rgba(255,255,255,0.2); }
-.card.joker { background:linear-gradient(135deg,#2a1a6a,#4a2a9a); color:#f0d080; border-color:rgba(201,168,76,0.4); }
-.card-rank { font-size:13px; line-height:1; }
-.card-suit { font-size:11px; line-height:1; }
-.card-sm { width:32px; height:46px; font-size:10px; }
-.card-sm .card-rank { font-size:11px; }
-.card-sm .card-suit { font-size:9px; }
-.hand-label { font-family:'Cinzel',serif; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:rgba(245,237,216,0.4); margin-bottom:3px; }
-.hand-group { display:flex; flex-direction:column; }
-.card-row { display:flex; gap:3px; }
-.cards-area { display:flex; gap:8px; flex-wrap:wrap; align-items:flex-start; }
+/* Result tags */
+.rtag{font-family:'Cinzel',serif;font-size:10px;padding:2px 7px;border-radius:3px;letter-spacing:.5px;white-space:nowrap}
+.rtag-win{background:rgba(39,174,96,.2);border:1px solid #27ae60;color:#5dde8a}
+.rtag-lose{background:rgba(192,57,43,.2);border:1px solid #c0392b;color:#f08080}
+.rtag-push{background:rgba(128,128,128,.2);border:1px solid #888;color:#bbb}
+.rtag-acepush{background:rgba(201,168,76,.15);border:1px solid var(--gold-d);color:var(--gold)}
+.rtag-fold{background:rgba(80,80,80,.1);border:1px solid #555;color:#888}
+.net-chip{font-family:'Cinzel',serif;font-size:11px;font-weight:700}
+.nc-pos{color:#5dde8a}.nc-neg{color:#f08080}.nc-zero{color:#888}
+.not-playing{font-size:11px;color:rgba(245,237,216,.3);font-style:italic}
+.set-status{font-size:11px;color:#5dde8a;font-style:italic}
 
-/* ─── PHASE CONTROLS ─── */
-.phase-controls {
-  background:linear-gradient(180deg,#0d1a0a,#090f07);
-  border-top:1px solid var(--gold-dark); padding:10px 16px;
-  display:flex; align-items:center; gap:10px; flex-shrink:0; flex-wrap:wrap;
-}
-.phase-prompt { font-size:13px; color:rgba(245,237,216,0.7); font-style:italic; flex:1; min-width:120px; }
+/* ── BETTING UI ──────────────────────────────────────── */
+.bet-area{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.bet-display{font-family:'Cinzel',serif;font-size:11px;min-width:48px}
+.bet-display .val{color:#f0d080;font-weight:600}
+.chip-stack{display:flex;gap:3px;align-items:center}
+.chip{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-size:7px;font-weight:700;cursor:pointer;
+  border:2px solid rgba(255,255,255,.2);box-shadow:0 2px 4px rgba(0,0,0,.5);
+  transition:transform .15s;user-select:none;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);position:relative}
+.chip::before{content:'';position:absolute;inset:3px;border-radius:50%;border:1px dashed rgba(255,255,255,.25)}
+.chip:hover{transform:translateY(-2px) scale(1.1)}
+.chip-1{background:radial-gradient(circle at 35% 35%,#b0b0b0,#505050)}
+.chip-5{background:radial-gradient(circle at 35% 35%,#e05050,#8a1010)}
+.chip-25{background:radial-gradient(circle at 35% 35%,#4090e0,#1040a0)}
+.chip-100{background:radial-gradient(circle at 35% 35%,#303030,#080808)}
+.chip-500{background:radial-gradient(circle at 35% 35%,#6040d0,#2010a0)}
+.clear-btn{font-size:9px;padding:3px 6px;background:rgba(0,0,0,.3);
+  border:1px solid rgba(192,57,43,.4);color:#f08080;border-radius:3px;
+  cursor:pointer;font-family:'Cinzel',serif;transition:all .15s}
+.clear-btn:hover{background:rgba(192,57,43,.2);border-color:#c0392b}
+.bonus-area{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:4px 8px;
+  background:rgba(160,80,200,.08);border:1px solid rgba(160,80,200,.22);border-radius:5px;margin-top:4px}
+.bonus-lbl{font-family:'Cinzel',serif;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#c080f0}
+.bonus-disp{font-family:'Cinzel',serif;font-size:11px}
+.bonus-disp .val{color:#e0a8ff;font-weight:600}
+.brtag{font-family:'Cinzel',serif;font-size:10px;padding:2px 7px;border-radius:3px}
+.brtag-win{background:rgba(39,174,96,.15);border:1px solid #27ae60;color:#80f0a0}
+.brtag-lose{background:rgba(80,80,80,.1);border:1px solid #555;color:#888}
 
-/* ─── HAND SETTER ─── */
-#hand-setter {
-  position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:100;
-  display:none; flex-direction:column; overflow-y:auto; padding:16px;
-  -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
-}
-#hand-setter.open { display:flex; }
-.setter-title { font-family:'Cinzel Decorative',serif; font-size:18px; color:var(--gold); text-align:center; margin-bottom:4px; }
-.setter-subtitle { font-size:13px; color:rgba(245,237,216,0.5); text-align:center; font-style:italic; margin-bottom:14px; }
-.setter-instruction { background:rgba(41,128,185,0.15); border:1px solid rgba(41,128,185,0.3); border-radius:6px; padding:10px 14px; font-size:13px; color:rgba(245,237,216,0.8); margin-bottom:14px; text-align:center; }
-.setter-hands { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-bottom:14px; }
-.setter-hand { background:rgba(15,42,24,0.8); border:1px solid rgba(201,168,76,0.3); border-radius:8px; padding:12px; min-width:150px; }
-.setter-hand-title { font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--gold); margin-bottom:6px; text-align:center; }
-.setter-hand-rule { font-size:11px; color:rgba(245,237,216,0.4); text-align:center; margin-bottom:8px; font-style:italic; }
-.setter-cards { display:flex; gap:4px; min-height:58px; align-items:center; flex-wrap:wrap; }
-.hand-rank-display { font-family:'Cinzel',serif; font-size:11px; color:var(--gold-light); text-align:center; margin-top:6px; min-height:16px; }
-.all-cards-area { background:rgba(0,0,0,0.3); border:1px solid rgba(201,168,76,0.15); border-radius:8px; padding:12px; margin-bottom:14px; }
-.all-cards-title { font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:rgba(201,168,76,0.6); margin-bottom:8px; text-align:center; }
-.all-cards-grid { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
-.setter-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
-.house-way-btn { background:rgba(0,0,0,0.4); border:1px solid rgba(39,174,96,0.4); color:#5dde8a; font-family:'Cinzel',serif; font-size:10px; padding:5px 12px; border-radius:3px; cursor:pointer; transition:all 0.15s; }
-.house-way-btn:hover { background:rgba(39,174,96,0.15); border-color:#27ae60; }
+/* ── PLAYING CARDS ───────────────────────────────────── */
+.card{width:32px;height:46px;border-radius:4px;background:#fff;
+  border:1px solid rgba(0,0,0,.2);box-shadow:0 2px 4px rgba(0,0,0,.5);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-weight:700;user-select:none;font-family:'EB Garamond',serif;flex-shrink:0}
+.card.clickable{cursor:pointer;transition:transform .12s,box-shadow .12s}
+.card.clickable:hover{transform:translateY(-4px);box-shadow:0 6px 14px rgba(0,0,0,.6)}
+.card.red{color:#c0392b}.card.black{color:#111}
+.card.back{background:linear-gradient(135deg,#0d2a8a,#1a4ab0);border-color:rgba(255,255,255,.1)}
+.card.back::after{content:'🂠';font-size:18px;color:rgba(255,255,255,.2)}
+.card.joker{background:linear-gradient(135deg,#2a1a6a,#4a2a9a);color:#f0d080;border-color:rgba(201,168,76,.4)}
+.card-rank{font-size:11px;line-height:1}.card-suit{font-size:9px;line-height:1}
+.card-sm .card-rank{font-size:10px}.card-sm .card-suit{font-size:8px}
+.card-sm{width:27px;height:39px}
+.hand-lbl{font-family:'Cinzel',serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;
+  color:rgba(245,237,216,.3);margin-bottom:2px}
+.hand-grp{display:flex;flex-direction:column}
+.card-row{display:flex;gap:2px}
+.cards-area{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start}
 
-/* ─── BUY-IN MODAL ─── */
-#buyin-modal {
-  position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:250;
-  display:none; align-items:center; justify-content:center;
-  -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
-}
-#buyin-modal.open { display:flex; }
-.buyin-box {
-  background:linear-gradient(160deg,#0f2a18,#0a1a0f);
-  border:1px solid var(--gold-dark); border-radius:8px; padding:24px;
-  width:300px; max-width:90vw; box-shadow:var(--shadow);
-}
-.buyin-title { font-family:'Cinzel Decorative',serif; font-size:15px; color:var(--gold); text-align:center; margin-bottom:4px; }
-.buyin-sub { font-size:12px; color:rgba(245,237,216,0.4); text-align:center; font-style:italic; margin-bottom:16px; }
-.buyin-presets { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
-.buyin-preset { padding:10px; background:rgba(0,0,0,0.3); border:1px solid rgba(201,168,76,0.2); border-radius:5px; text-align:center; cursor:pointer; font-family:'Cinzel',serif; font-size:13px; color:var(--gold); transition:all 0.15s; }
-.buyin-preset:hover { background:rgba(201,168,76,0.1); border-color:var(--gold); }
-.buyin-custom-row { display:flex; gap:8px; align-items:center; margin-bottom:14px; }
-.buyin-custom-row input { flex:1; padding:8px 12px; font-size:15px; }
-.buyin-actions { display:flex; gap:8px; justify-content:center; }
+/* Hidden / waiting for reveal */
+.reveal-pending{display:flex;align-items:center;gap:6px;font-size:11px;
+  color:rgba(245,237,216,.4);font-style:italic}
+.reveal-pending .card.back{opacity:.6}
 
-/* ─── STATS PANEL ─── */
-#stats-panel {
-  position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:200;
-  display:none; flex-direction:column; overflow-y:auto; padding:20px;
-}
-#stats-panel.open { display:flex; }
-.stats-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
-.stats-title { font-family:'Cinzel Decorative',serif; font-size:20px; color:var(--gold); }
-.stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; margin-bottom:20px; }
-.stat-card { background:rgba(15,42,24,0.6); border:1px solid rgba(201,168,76,0.2); border-radius:8px; padding:14px; text-align:center; }
-.stat-player { font-family:'Cinzel',serif; font-size:12px; color:var(--gold); margin-bottom:8px; border-bottom:1px solid rgba(201,168,76,0.2); padding-bottom:6px; }
-.stat-row { display:flex; justify-content:space-between; font-size:12px; margin:4px 0; }
-.stat-row .val { color:var(--gold-light); font-weight:600; }
+/* ── PHASE CONTROLS ──────────────────────────────────── */
+.phase-bar{background:linear-gradient(180deg,#0d1a0a,#090f07);
+  border-top:1px solid var(--gold-d);padding:8px 14px;
+  display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.phase-prompt{font-size:12px;color:rgba(245,237,216,.6);font-style:italic;flex:1;min-width:100px}
+#phase-buttons{display:flex;gap:7px;flex-wrap:wrap}
 
-/* ─── TOAST ─── */
-#toast {
-  position:fixed; bottom:80px; left:50%;
-  transform:translateX(-50%) translateY(20px);
-  background:rgba(0,0,0,0.9); border:1px solid var(--gold-dark);
-  color:var(--cream); font-family:'Cinzel',serif; font-size:12px;
-  padding:10px 20px; border-radius:20px; opacity:0;
-  transition:all 0.3s; z-index:300; letter-spacing:0.5px;
-  pointer-events:none; white-space:nowrap;
-}
-#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-.conn-dot { width:8px; height:8px; border-radius:50%; background:#27ae60; display:inline-block; margin-right:4px; }
-.conn-dot.off { background:#c0392b; }
+/* ── HAND SETTER ─────────────────────────────────────── */
+#hand-setter{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:100;
+  display:none;flex-direction:column;overflow-y:auto;padding:14px;
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#hand-setter.open{display:flex}
+.setter-title{font-family:'Cinzel Decorative',serif;font-size:17px;color:var(--gold);
+  text-align:center;margin-bottom:3px}
+.setter-sub{font-size:12px;color:rgba(245,237,216,.45);text-align:center;font-style:italic;margin-bottom:10px}
+.setter-instr{background:rgba(41,128,185,.12);border:1px solid rgba(41,128,185,.28);
+  border-radius:6px;padding:8px 12px;font-size:12px;color:rgba(245,237,216,.72);
+  margin-bottom:10px;text-align:center}
+.target-ind{font-family:'Cinzel',serif;font-size:11px;letter-spacing:1px;
+  color:#7ac0e8;text-align:center;margin-bottom:10px}
+.setter-hands{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:10px}
+.setter-hand{background:rgba(15,42,24,.8);border:1px solid rgba(201,168,76,.25);
+  border-radius:8px;padding:10px;min-width:140px;transition:border-color .2s}
+.setter-hand.active-target{border-color:#2980b9;box-shadow:0 0 10px rgba(41,128,185,.25)}
+.setter-hand-title{font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--gold);margin-bottom:4px;text-align:center}
+.setter-hand-rule{font-size:10px;color:rgba(245,237,216,.32);text-align:center;
+  margin-bottom:6px;font-style:italic}
+.setter-cards{display:flex;gap:3px;min-height:52px;align-items:center;flex-wrap:wrap}
+.hand-rank-disp{font-family:'Cinzel',serif;font-size:10px;color:var(--gold-l);
+  text-align:center;margin-top:5px;min-height:14px}
+.all-cards-area{background:rgba(0,0,0,.28);border:1px solid rgba(201,168,76,.12);
+  border-radius:8px;padding:10px;margin-bottom:10px}
+.all-cards-title{font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;
+  text-transform:uppercase;color:rgba(201,168,76,.5);margin-bottom:7px;text-align:center}
+.all-cards-grid{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.setter-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.hw-btn{background:rgba(0,0,0,.4);border:1px solid rgba(39,174,96,.4);color:#5dde8a;
+  font-family:'Cinzel',serif;font-size:10px;padding:5px 12px;border-radius:3px;
+  cursor:pointer;transition:all .15s}
+.hw-btn:hover{background:rgba(39,174,96,.15)}
 
-@media (max-width:480px) {
-  .chip { width:28px; height:28px; font-size:7px; }
-  .card { width:34px; height:48px; }
-  .card-sm { width:28px; height:40px; }
+/* ── BUY-IN MODAL ────────────────────────────────────── */
+#buyin-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:250;
+  display:none;align-items:center;justify-content:center;
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#buyin-modal.open{display:flex}
+.buyin-box{background:linear-gradient(160deg,#0f2a18,#0a1a0f);border:1px solid var(--gold-d);
+  border-radius:8px;padding:22px;width:290px;max-width:90vw;box-shadow:var(--shadow)}
+.buyin-title{font-family:'Cinzel Decorative',serif;font-size:15px;color:var(--gold);
+  text-align:center;margin-bottom:4px}
+.buyin-sub{font-size:12px;color:rgba(245,237,216,.4);text-align:center;
+  font-style:italic;margin-bottom:14px}
+.buyin-presets{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.buyin-preset{padding:9px;background:rgba(0,0,0,.3);border:1px solid rgba(201,168,76,.2);
+  border-radius:5px;text-align:center;cursor:pointer;font-family:'Cinzel',serif;
+  font-size:13px;color:var(--gold);transition:all .15s}
+.buyin-preset:hover{background:rgba(201,168,76,.1);border-color:var(--gold)}
+.buyin-custom-row{display:flex;gap:7px;align-items:center;margin-bottom:12px}
+.buyin-custom-row input{flex:1;padding:7px 10px;font-size:14px}
+.buyin-actions{display:flex;gap:8px;justify-content:center}
+
+/* ── STATS PANEL ─────────────────────────────────────── */
+#stats-panel{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:200;
+  display:none;flex-direction:column;overflow-y:auto;padding:18px}
+#stats-panel.open{display:flex}
+.stats-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.stats-title{font-family:'Cinzel Decorative',serif;font-size:18px;color:var(--gold)}
+
+/* Best hand trophy block */
+.best-hand-block{
+  background:linear-gradient(135deg,rgba(201,168,76,.12),rgba(100,60,0,.18));
+  border:1px solid var(--gold-d);border-radius:8px;padding:14px 16px;margin-bottom:14px;
+  text-align:center;
+}
+.best-hand-crown{font-size:28px;line-height:1;margin-bottom:4px}
+.best-hand-label{font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;
+  text-transform:uppercase;color:rgba(201,168,76,.45);margin-bottom:6px}
+.best-hand-name{font-family:'Cinzel Decorative',serif;font-size:18px;color:var(--gold-l);
+  text-shadow:0 0 16px rgba(240,208,128,.4);margin-bottom:4px}
+.best-hand-who{font-size:13px;color:var(--cream)}
+.best-hand-who span{color:var(--gold);font-weight:600}
+.best-hand-round{font-size:11px;color:rgba(245,237,216,.4);font-style:italic;margin-top:2px}
+.best-hand-empty{font-size:12px;color:rgba(245,237,216,.3);font-style:italic}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
+.stat-card{background:rgba(15,42,24,.6);border:1px solid rgba(201,168,76,.2);
+  border-radius:8px;padding:12px;text-align:center}
+.stat-player{font-family:'Cinzel',serif;font-size:11px;color:var(--gold);margin-bottom:6px;
+  border-bottom:1px solid rgba(201,168,76,.2);padding-bottom:5px}
+.stat-row{display:flex;justify-content:space-between;font-size:11px;margin:3px 0}
+.stat-row .val{color:var(--gold-l);font-weight:600}
+.house-block{grid-column:1/-1;background:linear-gradient(135deg,rgba(160,80,200,.12),rgba(100,40,160,.08));
+  border-color:rgba(160,80,200,.35)}
+.house-block .stat-player{color:#c080f0;border-color:rgba(160,80,200,.25)}
+.house-nums{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.house-num{text-align:center}
+.house-num-lbl{font-family:'Cinzel',serif;font-size:9px;color:rgba(245,237,216,.38);
+  letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+.house-num-val{font-family:'Cinzel',serif;font-size:16px;font-weight:700}
+
+/* ── ACE-HIGH PUSH BANNER ────────────────────────────── */
+.ace-push-banner{
+  background:rgba(201,168,76,.1);border-top:1px solid var(--gold-d);border-bottom:1px solid var(--gold-d);
+  padding:5px 12px;text-align:center;font-family:'Cinzel',serif;font-size:11px;
+  color:var(--gold);letter-spacing:1.5px;flex-shrink:0;z-index:3;
+}
+
+/* ── TOAST ───────────────────────────────────────────── */
+#toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:rgba(0,0,0,.9);border:1px solid var(--gold-d);color:var(--cream);
+  font-family:'Cinzel',serif;font-size:11px;padding:9px 18px;border-radius:20px;
+  opacity:0;transition:all .3s;z-index:300;letter-spacing:.5px;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:480px){
+  .chip{width:24px;height:24px;font-size:6px}
+  .card{width:28px;height:41px}
+  .card-sm{width:23px;height:34px}
+  .casino-table{border-radius:40% / 30%}
+  .dealer-booth{border-radius:40% 40% 0 0 / 50% 50% 0 0;padding:6px 8% 8px}
 }
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- LOBBY SCREEN -->
-  <div id="lobby-screen" class="screen active">
-    <div class="lobby-box">
-      <div class="logo-title">Pai Gow Poker</div>
-      <div class="logo-sub">A game of skill, fortune & the Joker's grace</div>
-      <div class="divider"></div>
-
-      <!-- JOIN vs HOST tabs -->
-      <div id="main-tabs" class="tab-row">
-        <div class="tab active" onclick="switchTab('host-tab','join-tab',this)">Host a Game</div>
-        <div class="tab" onclick="switchTab('join-tab','host-tab',this)">Join a Game</div>
-      </div>
-
-      <!-- HOST TAB -->
-      <div id="host-tab" class="tab-content active">
-        <div class="form-group">
-          <label>Your Name</label>
-          <input type="text" id="host-name" placeholder="Enter your name" maxlength="20">
-        </div>
-        <div class="form-group">
-          <label>Starting Chips</label>
-          <div class="chip-presets" id="chip-presets">
-            <div class="chip-preset active" onclick="selectChips(this,500)">500</div>
-            <div class="chip-preset" onclick="selectChips(this,1000)">1,000</div>
-            <div class="chip-preset" onclick="selectChips(this,2000)">2,000</div>
-            <div class="chip-preset" onclick="selectChips(this,5000)">5,000</div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>🎰 Bonus Bet Payouts</label>
-          <div class="bonus-payout-grid">
-            <div class="bonus-payout-row"><span class="bonus-hand-name">3 Pairs</span><input type="number" id="bp-threepair" value="2" min="1"><span class="bonus-x">×</span></div>
-            <div class="bonus-payout-row"><span class="bonus-hand-name">Three of a Kind</span><input type="number" id="bp-trips" value="3" min="1"><span class="bonus-x">×</span></div>
-            <div class="bonus-payout-row"><span class="bonus-hand-name">Straight</span><input type="number" id="bp-straight" value="10" min="1"><span class="bonus-x">×</span></div>
-            <div class="bonus-payout-row"><span class="bonus-hand-name">Flush</span><input type="number" id="bp-flush" value="15" min="1"><span class="bonus-x">×</span></div>
-            <div class="bonus-payout-row"><span class="bonus-hand-name">Full House</span><input type="number" id="bp-fullhouse" value="25" min="1"><span class="bonus-x">×</span></div>
-            <div class="bonus-payout-row"><span class="bonus-hand-name">Four of a Kind</span><input type="number" id="bp-quads" value="50" min="1"><span class="bonus-x">×</span></div>
-            <div class="bonus-payout-row"><span class="bonus-hand-name">Straight Flush</span><input type="number" id="bp-sf" value="200" min="1"><span class="bonus-x">×</span></div>
-            <div class="bonus-payout-row"><span class="bonus-hand-name">Royal Flush</span><input type="number" id="bp-royal" value="8000" min="1"><span class="bonus-x">×</span></div>
-            <div class="bonus-payout-row"><span class="bonus-hand-name">7-Card SF (Joker)</span><input type="number" id="bp-sf7joker" value="1000" min="1"><span class="bonus-x">×</span></div>
-            <div class="bonus-payout-row"><span class="bonus-hand-name">Natural 7-Card SF</span><input type="number" id="bp-sf7natural" value="2000" min="1"><span class="bonus-x">×</span></div>
-            <div class="bonus-payout-row" style="grid-column:1/-1"><span class="bonus-hand-name">Five Aces 👑</span><input type="number" id="bp-fiveaces" value="2000" min="1"><span class="bonus-x">×</span></div>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;justify-content:center;">
-          <button class="btn btn-primary btn-lg" onclick="hostGame()">Create Room</button>
+<!-- ── LOBBY ──────────────────────────────────────────────── -->
+<div id="lobby-screen" class="screen active">
+  <div class="lobby-box">
+    <div class="logo-title">Pai Gow Poker</div>
+    <div class="logo-sub">A game of skill, fortune &amp; the Joker's grace</div>
+    <div class="divider"></div>
+    <div id="main-tabs" class="tab-row">
+      <div class="tab active" onclick="switchTab('host-tab','join-tab',this)">Host a Game</div>
+      <div class="tab"       onclick="switchTab('join-tab','host-tab',this)">Join a Game</div>
+    </div>
+    <div id="host-tab" class="tab-content active">
+      <div class="form-group"><label>Your Name</label><input type="text" id="host-name" placeholder="Enter your name" maxlength="20"></div>
+      <div class="form-group"><label>Starting Chips</label>
+        <div class="chip-presets">
+          <div class="chip-preset active" onclick="selectChips(this,500)">500</div>
+          <div class="chip-preset" onclick="selectChips(this,1000)">1,000</div>
+          <div class="chip-preset" onclick="selectChips(this,2000)">2,000</div>
+          <div class="chip-preset" onclick="selectChips(this,5000)">5,000</div>
         </div>
       </div>
-
-      <!-- JOIN TAB -->
-      <div id="join-tab" class="tab-content">
-        <div class="form-group">
-          <label>Your Name</label>
-          <input type="text" id="join-name" placeholder="Enter your name" maxlength="20">
-        </div>
-        <div class="form-group">
-          <label>Room Code</label>
-          <div class="join-code-row">
-            <input type="text" id="join-code" placeholder="XXXX" maxlength="4">
-            <button class="btn btn-primary" onclick="joinGame()">Join</button>
-          </div>
+      <div class="form-group"><label>🎰 Bonus Bet Payouts</label>
+        <div class="bonus-payout-grid">
+          <div class="bonus-payout-row"><span class="bonus-hand-name">3 Pairs</span><input type="number" id="bp-threepair" value="2" min="1"><span class="bonus-x">×</span></div>
+          <div class="bonus-payout-row"><span class="bonus-hand-name">Three of a Kind</span><input type="number" id="bp-trips" value="3" min="1"><span class="bonus-x">×</span></div>
+          <div class="bonus-payout-row"><span class="bonus-hand-name">Straight</span><input type="number" id="bp-straight" value="10" min="1"><span class="bonus-x">×</span></div>
+          <div class="bonus-payout-row"><span class="bonus-hand-name">Flush</span><input type="number" id="bp-flush" value="15" min="1"><span class="bonus-x">×</span></div>
+          <div class="bonus-payout-row"><span class="bonus-hand-name">Full House</span><input type="number" id="bp-fullhouse" value="25" min="1"><span class="bonus-x">×</span></div>
+          <div class="bonus-payout-row"><span class="bonus-hand-name">Four of a Kind</span><input type="number" id="bp-quads" value="50" min="1"><span class="bonus-x">×</span></div>
+          <div class="bonus-payout-row"><span class="bonus-hand-name">Straight Flush</span><input type="number" id="bp-sf" value="200" min="1"><span class="bonus-x">×</span></div>
+          <div class="bonus-payout-row"><span class="bonus-hand-name">Royal Flush</span><input type="number" id="bp-royal" value="8000" min="1"><span class="bonus-x">×</span></div>
+          <div class="bonus-payout-row"><span class="bonus-hand-name">7-Card SF (Joker)</span><input type="number" id="bp-sf7joker" value="1000" min="1"><span class="bonus-x">×</span></div>
+          <div class="bonus-payout-row"><span class="bonus-hand-name">Natural 7-Card SF</span><input type="number" id="bp-sf7natural" value="2000" min="1"><span class="bonus-x">×</span></div>
+          <div class="bonus-payout-row" style="grid-column:1/-1"><span class="bonus-hand-name">Five Aces 👑</span><input type="number" id="bp-fiveaces" value="2000" min="1"><span class="bonus-x">×</span></div>
         </div>
       </div>
-
-      <!-- WAITING ROOM (shown after creating/joining) -->
-      <div id="waiting-room" style="display:none;">
-        <div class="room-code-display">
-          <div class="room-code-label">Room Code — share with friends</div>
-          <div class="room-code" id="display-code">----</div>
-        </div>
-        <div class="waiting-players" id="waiting-players"></div>
-        <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;" id="host-start-row">
-          <button class="btn btn-primary btn-lg" onclick="startGame()">Start Game</button>
-        </div>
+      <div style="display:flex;gap:10px;justify-content:center"><button class="btn btn-primary btn-lg" onclick="hostGame()">Create Room</button></div>
+    </div>
+    <div id="join-tab" class="tab-content">
+      <div class="form-group"><label>Your Name</label><input type="text" id="join-name" placeholder="Enter your name" maxlength="20"></div>
+      <div class="form-group"><label>Room Code</label>
+        <div class="join-code-row"><input type="text" id="join-code" placeholder="XXXX" maxlength="4"><button class="btn btn-primary" onclick="joinGame()">Join</button></div>
       </div>
     </div>
-  </div>
-
-  <!-- GAME SCREEN -->
-  <div id="game-screen" class="screen">
-    <header>
-      <div class="logo">Pai Gow <span>Poker</span></div>
-      <span class="room-badge" id="header-code"></span>
-      <span class="phase-badge phase-bet" id="phase-badge">Betting</span>
-      <div class="header-right">
-        <button class="btn btn-sm" onclick="showStats()">📊 Stats</button>
+    <div id="waiting-room" style="display:none">
+      <div class="room-code-display">
+        <div class="room-code-label">Room Code — share with friends</div>
+        <div class="room-code" id="display-code">----</div>
       </div>
-    </header>
-    <div class="table-area" id="table-area"></div>
-    <div class="phase-controls" id="phase-controls">
-      <div class="phase-prompt" id="phase-prompt"></div>
-      <div id="phase-buttons" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      <div id="waiting-players"></div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:14px" id="host-start-row">
+        <button class="btn btn-primary btn-lg" onclick="startGame()">Start Game</button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- HAND SETTER -->
-<div id="hand-setter">
-  <div class="setter-title">Set Your Hand</div>
-  <div class="setter-subtitle" id="setter-sub">Arrange your 7 cards into High (5) and Low (2) hands</div>
-  <div class="setter-instruction">Tap any card below to move it · Tap a placed card to return it</div>
-  <div class="setter-hands">
-    <div class="setter-hand">
-      <div class="setter-hand-title">🃏 High Hand (5 cards)</div>
-      <div class="setter-hand-rule">Must rank higher than Low Hand</div>
-      <div class="setter-cards" id="high-hand-cards"></div>
-      <div class="hand-rank-display" id="high-hand-rank"></div>
+<!-- ── GAME SCREEN ────────────────────────────────────────── -->
+<div id="game-screen" class="screen">
+  <header>
+    <div class="logo">Pai Gow <span>Poker</span></div>
+    <span class="room-badge" id="header-code"></span>
+    <span class="phase-badge phase-bet" id="phase-badge">Betting</span>
+    <div class="header-right">
+      <button class="btn btn-sm" onclick="showStats()">📊 Stats</button>
     </div>
-    <div class="setter-hand">
+  </header>
+
+  <div class="table-wrap">
+    <div class="casino-table">
+      <div class="felt-watermark">Pai Gow Poker</div>
+
+      <!-- Ace-high push banner -->
+      <div class="ace-push-banner" id="ace-push-banner" style="display:none">
+        ♠ Banker holds Ace-High — All bets push ♠
+      </div>
+
+      <!-- Dealer booth at the top -->
+      <div class="dealer-booth">
+        <div class="dealer-label">Dealer · Banker</div>
+        <div class="dealer-seat-row" id="banker-area"></div>
+      </div>
+
+      <!-- Player seats arc -->
+      <div class="player-arc" id="player-arc"></div>
+    </div>
+  </div>
+
+  <div class="phase-bar">
+    <div class="phase-prompt" id="phase-prompt"></div>
+    <div id="phase-buttons"></div>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<!-- ── HAND SETTER ────────────────────────────────────────── -->
+<div id="hand-setter">
+  <div class="setter-title" id="setter-title">Set Your Hand</div>
+  <div class="setter-sub" id="setter-sub"></div>
+  <div class="setter-instr">Tap a card to assign it · High Hand fills first · Tap a placed card to return it</div>
+  <div class="target-ind" id="target-ind">▶ Filling: High Hand</div>
+  <div class="setter-hands">
+    <div class="setter-hand active-target" id="high-hand-box">
+      <div class="setter-hand-title">🃏 High Hand (5 cards)</div>
+      <div class="setter-hand-rule">Must outrank Low Hand</div>
+      <div class="setter-cards" id="high-hand-cards"></div>
+      <div class="hand-rank-disp" id="high-hand-rank"></div>
+    </div>
+    <div class="setter-hand" id="low-hand-box">
       <div class="setter-hand-title">🂡 Low Hand (2 cards)</div>
       <div class="setter-hand-rule">Best 2-card hand</div>
       <div class="setter-cards" id="low-hand-cards"></div>
-      <div class="hand-rank-display" id="low-hand-rank"></div>
+      <div class="hand-rank-disp" id="low-hand-rank"></div>
     </div>
   </div>
   <div class="all-cards-area">
@@ -486,13 +529,13 @@ header::after { content:''; position:absolute; bottom:-1px; left:0; right:0; hei
     <div class="all-cards-grid" id="all-setter-cards"></div>
   </div>
   <div class="setter-actions">
-    <button class="house-way-btn" onclick="requestHouseWay()">🏠 House Way</button>
+    <button class="hw-btn" onclick="requestHouseWay()">🏠 House Way</button>
     <button class="btn btn-primary btn-lg" onclick="confirmHand()">Confirm Hand</button>
     <button class="btn" onclick="closeSetter()">Cancel</button>
   </div>
 </div>
 
-<!-- BUY-IN MODAL -->
+<!-- ── BUY-IN ─────────────────────────────────────────────── -->
 <div id="buyin-modal">
   <div class="buyin-box">
     <div class="buyin-title">Buy In</div>
@@ -507,115 +550,92 @@ header::after { content:''; position:absolute; bottom:-1px; left:0; right:0; hei
       <input type="number" id="buyin-custom" placeholder="Custom amount" min="1">
       <button class="btn" onclick="doBuyInCustom()">Add</button>
     </div>
-    <div class="buyin-actions">
-      <button class="btn btn-danger" onclick="closeBuyIn()">Cancel</button>
-    </div>
+    <div class="buyin-actions"><button class="btn btn-danger" onclick="closeBuyIn()">Cancel</button></div>
   </div>
 </div>
 
-<!-- STATS PANEL -->
+<!-- ── STATS ──────────────────────────────────────────────── -->
 <div id="stats-panel">
   <div class="stats-header">
     <div class="stats-title">Statistics</div>
     <button class="btn" onclick="hideStats()">Close</button>
   </div>
-  <div class="stats-grid" id="stats-grid"></div>
+  <div id="stats-content"></div>
 </div>
 
 <div id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 //  SOCKET + STATE
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 const socket = io();
 let myId = socket.id;
 let roomCode = null;
 let isHost = false;
-let gameState = null; // latest state from server
+let gameState = null;
 let startingChips = 500;
 
-// Setter temps
+// Setter state
 let tempHigh = [], tempLow = [], tempUnassigned = [];
+let setterTarget = 'high';
 
 socket.on('connect', () => { myId = socket.id; });
 
 socket.on('roomCreated', ({ code }) => {
-  roomCode = code;
-  isHost = true;
+  roomCode = code; isHost = true;
   document.getElementById('display-code').textContent = code;
   document.getElementById('header-code').textContent = code;
   showWaitingRoom(true);
 });
-
 socket.on('joinedRoom', ({ code }) => {
-  roomCode = code;
-  isHost = false;
+  roomCode = code; isHost = false;
   document.getElementById('display-code').textContent = code;
   document.getElementById('header-code').textContent = code;
   showWaitingRoom(false);
 });
+socket.on('error', msg => toast(msg));
+socket.on('playerLeft', ({ name }) => toast(`${name} disconnected`));
 
-socket.on('error', (msg) => { toast(msg); });
-
-socket.on('playerLeft', ({ name }) => { toast(`${name} disconnected`); });
-
-socket.on('state', (state) => {
+socket.on('state', state => {
   gameState = state;
-  if (state.phase === 'lobby') {
-    renderWaiting(state);
-  } else {
-    showScreen('game-screen');
-    renderGame(state);
-  }
+  if (state.phase === 'lobby') renderWaiting(state);
+  else { showScreen('game-screen'); renderGame(state); }
 });
 
 socket.on('houseWaySuggestion', ({ high, low }) => {
-  tempHigh = high;
-  tempLow = low;
-  tempUnassigned = [];
+  tempHigh = high; tempLow = low; tempUnassigned = [];
+  setterTarget = 'high';
   renderSetter();
-  toast('House Way applied — confirm when ready');
+  toast('House Way applied — review and confirm');
 });
 
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 //  LOBBY
-// ═══════════════════════════════════════════════════════════
-function switchTab(showId, hideId, el) {
-  document.getElementById(showId).classList.add('active');
-  document.getElementById(hideId).classList.remove('active');
+// ════════════════════════════════════════════════════════════
+function switchTab(a, b, el) {
+  document.getElementById(a).classList.add('active');
+  document.getElementById(b).classList.remove('active');
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
 }
-
-function selectChips(el, val) {
-  startingChips = val;
+function selectChips(el, v) {
+  startingChips = v;
   document.querySelectorAll('.chip-preset').forEach(e => e.classList.remove('active'));
   el.classList.add('active');
 }
-
-function getBonusPayouts() {
-  return {
-    threepair:  parseInt(document.getElementById('bp-threepair').value)  || 2,
-    trips:      parseInt(document.getElementById('bp-trips').value)      || 3,
-    straight:   parseInt(document.getElementById('bp-straight').value)   || 10,
-    flush:      parseInt(document.getElementById('bp-flush').value)      || 15,
-    fullhouse:  parseInt(document.getElementById('bp-fullhouse').value)  || 25,
-    quads:      parseInt(document.getElementById('bp-quads').value)      || 50,
-    sf:         parseInt(document.getElementById('bp-sf').value)         || 200,
-    royal:      parseInt(document.getElementById('bp-royal').value)      || 8000,
-    sf7joker:   parseInt(document.getElementById('bp-sf7joker').value)   || 1000,
-    sf7natural: parseInt(document.getElementById('bp-sf7natural').value) || 2000,
-    fiveaces:   parseInt(document.getElementById('bp-fiveaces').value)   || 2000,
-  };
+function getBP() {
+  const g = id => parseInt(document.getElementById(id).value) || 0;
+  return { threepair:g('bp-threepair')||2, trips:g('bp-trips')||3, straight:g('bp-straight')||10,
+    flush:g('bp-flush')||15, fullhouse:g('bp-fullhouse')||25, quads:g('bp-quads')||50,
+    sf:g('bp-sf')||200, royal:g('bp-royal')||8000, sf7joker:g('bp-sf7joker')||1000,
+    sf7natural:g('bp-sf7natural')||2000, fiveaces:g('bp-fiveaces')||2000 };
 }
-
 function hostGame() {
   const name = document.getElementById('host-name').value.trim();
   if (!name) { toast('Enter your name'); return; }
-  socket.emit('createRoom', { name, startingChips, bonusPayouts: getBonusPayouts() });
+  socket.emit('createRoom', { name, startingChips, bonusPayouts: getBP() });
 }
-
 function joinGame() {
   const name = document.getElementById('join-name').value.trim();
   const code = document.getElementById('join-code').value.trim().toUpperCase();
@@ -623,12 +643,7 @@ function joinGame() {
   if (code.length !== 4) { toast('Enter the 4-letter room code'); return; }
   socket.emit('joinRoom', { code, name });
 }
-
-function startGame() {
-  if (!isHost) return;
-  socket.emit('startGame', { code: roomCode });
-}
-
+function startGame() { socket.emit('startGame', { code: roomCode }); }
 function showWaitingRoom(host) {
   document.getElementById('main-tabs').style.display = 'none';
   document.getElementById('host-tab').style.display = 'none';
@@ -636,23 +651,30 @@ function showWaitingRoom(host) {
   document.getElementById('waiting-room').style.display = 'block';
   document.getElementById('host-start-row').style.display = host ? 'flex' : 'none';
 }
-
 function renderWaiting(state) {
-  const el = document.getElementById('waiting-players');
-  el.innerHTML = state.players.map(p => `
+  document.getElementById('waiting-players').innerHTML = state.players.map(p => `
     <div class="waiting-player">
-      <span class="waiting-player-name">${p.name}</span>
-      ${p.id === state.players[0].id ? '<span class="host-badge">HOST</span>' : ''}
-      ${p.id === myId ? '<span class="me-badge">YOU</span>' : ''}
+      <span class="waiting-player-name">${esc(p.name)}</span>
+      ${p.id===state.players[0].id?'<span class="host-badge">HOST</span>':''}
+      ${p.id===myId?'<span class="me-badge">YOU</span>':''}
     </div>`).join('');
 }
 
-// ═══════════════════════════════════════════════════════════
-//  GAME RENDER
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+//  CASINO TABLE RENDER
+// ════════════════════════════════════════════════════════════
 function renderGame(state) {
-  const area = document.getElementById('table-area');
-  area.innerHTML = state.players.map((p, i) => renderSeat(p, i, state)).join('');
+  const isDone = state.phase === 'done';
+  document.getElementById('ace-push-banner').style.display =
+    (isDone && state.bankerAceHighPush) ? 'block' : 'none';
+
+  const banker = state.players[state.bankerIdx];
+  document.getElementById('banker-area').innerHTML = renderSeat(banker, state.bankerIdx, state);
+
+  const players = state.players.filter((_, i) => i !== state.bankerIdx);
+  document.getElementById('player-arc').innerHTML =
+    players.map(p => renderSeat(p, state.players.indexOf(p), state)).join('');
+
   renderControls(state);
   updatePhaseBadge(state.phase);
 }
@@ -660,248 +682,269 @@ function renderGame(state) {
 function renderSeat(p, idx, state) {
   const isMe = p.id === myId;
   const isBanker = idx === state.bankerIdx;
-  const isRevealing = state.phase === 'reveal' || state.phase === 'done';
-  let cls = 'player-seat';
-  if (isMe) cls += ' is-me';
+  const isDone = state.phase === 'done';
+
+  let cls = 'seat';
+  if (isMe)    cls += ' is-me';
   if (isBanker) cls += ' is-banker';
   if (p.folded) cls += ' folded';
   if (p.disconnected) cls += ' disconnected';
-  if (isRevealing && p.result === 'win')  cls += ' winner-seat';
-  if (isRevealing && p.result === 'lose') cls += ' loser-seat';
-  if (isRevealing && p.result === 'push') cls += ' push-seat';
+  if (isDone && p.result === 'win')  cls += ' winner';
+  if (isDone && p.result === 'lose') cls += ' loser';
+  if (isDone && p.result === 'push') cls += ' push-res';
 
-  let resultHTML = '';
-  if (isRevealing && p.result) {
-    const label = p.result === 'win' ? 'WIN' : p.result === 'lose' ? 'LOSE' : 'PUSH';
-    const rcls = p.result === 'win' ? 'result-win' : p.result === 'lose' ? 'result-lose' : 'result-push';
-    const nc = p.netChips > 0 ? 'net-pos' : p.netChips < 0 ? 'net-neg' : 'net-zero';
-    const ns = p.netChips > 0 ? `+${p.netChips}` : p.netChips;
-    resultHTML = `<span class="result-tag ${rcls}">${label}</span><span class="net-chips ${nc}">${ns}</span>`;
+  // Add flip animation class for seats just revealed this update
+  if (isDone && p.revealed && state.revealStep > 0) cls += ' being-revealed';
+
+  // Result tags
+  let rtHTML = '';
+  if (isDone && p.result && !isBanker) {
+    const lbl = p.result === 'win' ? 'WIN' : p.result === 'lose' ? 'LOSE' : 'PUSH';
+    const rc  = p.result === 'win'  ? 'rtag-win'
+              : p.result === 'lose' ? 'rtag-lose'
+              : state.bankerAceHighPush ? 'rtag-acepush' : 'rtag-push';
+    const nc  = p.netChips > 0 ? 'nc-pos' : p.netChips < 0 ? 'nc-neg' : 'nc-zero';
+    const ns  = p.netChips > 0 ? `+${p.netChips}` : `${p.netChips}`;
+    rtHTML = `<span class="rtag ${rc}">${lbl}</span><span class="net-chip ${nc}">${ns}</span>`;
   }
-  if (isRevealing && p.folded) resultHTML = `<span class="result-tag result-fold">FOLDED</span>`;
+  if (isDone && p.folded) rtHTML = `<span class="rtag rtag-fold">FOLDED</span>`;
 
-  const buyinBtn = (isMe && state.phase === 'bet' && !isBanker)
+  const buyinBtn = isMe && state.phase === 'bet' && !isBanker
     ? `<button class="buyin-btn" onclick="openBuyIn()">+ Chips</button>` : '';
 
-  let bodyHTML = renderSeatBody(p, idx, state, isMe, isBanker, isRevealing);
+  const namePart = isMe ? `${esc(p.name)} <span class="me-badge">YOU</span>` : esc(p.name);
 
-  return `<div class="${cls}" id="seat-${idx}">
+  return `<div class="${cls}" id="seat-${p.id.replace(/[^a-z0-9]/gi,'_')}">
     <div class="seat-header">
-      <div class="seat-name">${p.name}${isMe ? ' <span class="me-badge">YOU</span>' : ''}</div>
-      ${isBanker ? '<span class="dealer-btn">BANKER</span>' : ''}
-      ${resultHTML}
+      <div class="seat-name">${namePart}</div>
+      ${isBanker ? '<span class="banker-chip">BANKER</span>' : ''}
+      ${rtHTML}
       <div class="chips-display">💰 <span class="amount">${p.chips}</span></div>
       ${buyinBtn}
     </div>
-    <div class="seat-body">${bodyHTML}</div>
+    <div class="seat-body">${renderBody(p, idx, state, isMe, isBanker)}</div>
   </div>`;
 }
 
-function renderSeatBody(p, idx, state, isMe, isBanker, isRevealing) {
+function renderBody(p, idx, state, isMe, isBanker) {
+  const isDone = state.phase === 'done';
+
   if (state.phase === 'bet') {
     if (isBanker) return `<span class="not-playing">Banker — covering all bets</span>`;
-    if (p.folded)  return `<span class="not-playing">Folded</span>`;
-    if (isMe)      return renderBetArea(p, state);
-    // Other players: show their bet status
-    return `<span class="not-playing">${p.bet > 0 ? `Bet: ${p.bet}${p.bonusBet>0?' + bonus '+p.bonusBet:''}` : 'No bet yet'}</span>`;
+    if (p.folded) return `<span class="not-playing">Folded</span>`;
+    if (isMe)     return renderBetUI(p);
+    return `<span class="not-playing">${p.bet > 0 ? `Bet: ${p.bet}${p.bonusBet>0?` + bonus ${p.bonusBet}`:''}` : 'No bet yet'}</span>`;
   }
   if (state.phase === 'set') {
     if (p.folded || (p.bet === 0 && !isBanker)) return `<span class="not-playing">Not playing</span>`;
-    if (p.handSet) return `<span class="set-status">✓ Hand set</span>`;
-    if (isMe) return `<button class="btn btn-primary" onclick="openSetter()">Set My Hand</button>`;
+    if (p.handSet)  return `<span class="set-status">✓ Hand set</span>`;
+    if (isMe)       return `<button class="btn btn-primary btn-sm" onclick="openSetter()">Set My Hand</button>`;
     return `<span class="not-playing">Setting hand…</span>`;
   }
-  if (isRevealing) return renderReveal(p, state);
+  if (isDone) {
+    if (p.folded || (p.bet === 0 && !isBanker)) return `<span class="not-playing">Not playing</span>`;
+    if (!p.revealed) {
+      // Cards not yet flipped for this player
+      return `<div class="reveal-pending">
+        ${[1,2,3,4,5].map(()=>`<div class="card back card-sm"></div>`).join('')}
+        <span style="font-size:10px;color:rgba(245,237,216,.3);font-style:italic;margin-left:4px;">awaiting reveal…</span>
+      </div>`;
+    }
+    return renderRevealCards(p, isBanker, state);
+  }
   return '';
 }
 
-function renderBetArea(p, state) {
-  const avail = p.chips - p.bonusBet;
-  const availBonus = p.chips - p.bet - p.bonusBet;
-  return `<div style="display:flex;flex-direction:column;gap:6px;width:100%;">
+function renderBetUI(p) {
+  const avail  = p.chips - p.bonusBet;
+  const availB = p.chips - p.bet - p.bonusBet;
+  const chips = (max, fn, sm) => [1,5,25,100,500].filter(v => max >= v).map(v =>
+    `<div class="chip chip-${v}"${sm?' style="width:22px;height:22px;font-size:6px"':''} onclick="${fn}(${v})">${v}</div>`).join('');
+  return `<div style="display:flex;flex-direction:column;gap:4px;width:100%">
     <div class="bet-area">
       <div class="bet-display">Bet: <span class="val">${p.bet}</span></div>
-      <div class="chip-stack">
-        ${avail>=1   ?`<div class="chip chip-1"   onclick="placeBet(1)">1</div>`:''}
-        ${avail>=5   ?`<div class="chip chip-5"   onclick="placeBet(5)">5</div>`:''}
-        ${avail>=25  ?`<div class="chip chip-25"  onclick="placeBet(25)">25</div>`:''}
-        ${avail>=100 ?`<div class="chip chip-100" onclick="placeBet(100)">100</div>`:''}
-        ${avail>=500 ?`<div class="chip chip-500" onclick="placeBet(500)">500</div>`:''}
-      </div>
-      ${p.bet>0?`<button class="clear-bet-btn" onclick="clearBet()">Clear</button>`:''}
-      <button class="btn btn-sm" onclick="doFold()">${p.folded?'Unfolded':'Fold'}</button>
+      <div class="chip-stack">${chips(avail,'placeBet',false)}</div>
+      ${p.bet>0?`<button class="clear-btn" onclick="clearBet()">Clear</button>`:''}
+      <button class="btn btn-sm" onclick="doFold()">${p.folded?'Unfold':'Fold'}</button>
     </div>
-    <div class="bonus-bet-area">
-      <span class="bonus-label">🎰 Bonus</span>
-      <div class="bonus-bet-display">Bet: <span class="val">${p.bonusBet}</span></div>
-      <div class="chip-stack">
-        ${availBonus>=1   ?`<div class="chip chip-1"   onclick="placeBonusBet(1)"   style="width:26px;height:26px;font-size:7px;">1</div>`:''}
-        ${availBonus>=5   ?`<div class="chip chip-5"   onclick="placeBonusBet(5)"   style="width:26px;height:26px;font-size:7px;">5</div>`:''}
-        ${availBonus>=25  ?`<div class="chip chip-25"  onclick="placeBonusBet(25)"  style="width:26px;height:26px;font-size:7px;">25</div>`:''}
-        ${availBonus>=100 ?`<div class="chip chip-100" onclick="placeBonusBet(100)" style="width:26px;height:26px;font-size:7px;">100</div>`:''}
-        ${availBonus>=500 ?`<div class="chip chip-500" onclick="placeBonusBet(500)" style="width:26px;height:26px;font-size:7px;">500</div>`:''}
-      </div>
-      ${p.bonusBet>0?`<button class="clear-bet-btn" onclick="clearBonusBet()">Clear</button>`:''}
+    <div class="bonus-area">
+      <span class="bonus-lbl">🎰 Bonus</span>
+      <div class="bonus-disp">Bet: <span class="val">${p.bonusBet}</span></div>
+      <div class="chip-stack">${chips(availB,'placeBonusBet',true)}</div>
+      ${p.bonusBet>0?`<button class="clear-btn" onclick="clearBonusBet()">Clear</button>`:''}
     </div>
   </div>`;
 }
 
-function renderReveal(p, state) {
-  if (p.folded || (p.bet === 0 && state.players.indexOf(p) !== state.bankerIdx))
-    return `<span class="not-playing">Not playing</span>`;
-  const isMe = p.id === myId;
-  const highEv = evalFiveClient(p.highHand);
-  const lowEv  = evalTwoClient(p.lowHand);
+function renderRevealCards(p, isBanker, state) {
+  const hn = evalFiveClient(p.highHand);
+  const ln = evalTwoClient(p.lowHand);
   const bonusHTML = p.bonusBet > 0 ? `
-    <div class="bonus-bet-area" style="margin-top:4px;padding:4px 8px;">
-      <span class="bonus-label">🎰 Bonus</span>
-      <span class="bonus-result-tag ${p.bonusWon?'bonus-win':'bonus-lose'}">${p.bonusLabel}</span>
-      ${p.bonusNet!==null?`<span class="net-chips ${p.bonusNet>0?'net-pos':'net-neg'}">${p.bonusNet>0?'+':''}${p.bonusNet}</span>`:''}
+    <div class="bonus-area" style="margin-top:4px;padding:3px 7px">
+      <span class="bonus-lbl">🎰</span>
+      <span class="brtag ${p.bonusWon?'brtag-win':'brtag-lose'}">${p.bonusLabel}</span>
+      ${p.bonusNet!=null?`<span class="net-chip ${p.bonusNet>0?'nc-pos':'nc-neg'}">${p.bonusNet>0?'+':''}${p.bonusNet}</span>`:''}
     </div>` : '';
-  return `<div style="width:100%;">
+  return `<div style="width:100%">
     <div class="cards-area">
-      <div class="hand-group">
-        <div class="hand-label">High (${highEv})</div>
-        <div class="card-row">${p.highHand.map(c=>renderCard(c,true)).join('')}</div>
+      <div class="hand-grp">
+        <div class="hand-lbl">High (${hn})</div>
+        <div class="card-row">${p.highHand.map(c=>cHTML(c,true)).join('')}</div>
       </div>
-      <div class="hand-group">
-        <div class="hand-label">Low (${lowEv})</div>
-        <div class="card-row">${p.lowHand.map(c=>renderCard(c,true)).join('')}</div>
+      <div class="hand-grp">
+        <div class="hand-lbl">Low (${ln})</div>
+        <div class="card-row">${p.lowHand.map(c=>cHTML(c,true)).join('')}</div>
       </div>
-    </div>
-    ${bonusHTML}
+    </div>${bonusHTML}
   </div>`;
 }
 
-function renderCard(card, small=false) {
-  if (!card || card.hidden) return `<div class="card${small?' card-sm':''} back"></div>`;
-  if (card.isJoker) return `<div class="card${small?' card-sm':''} joker"><div class="card-rank">★</div><div class="card-suit" style="font-size:9px;">JOKER</div></div>`;
+function cHTML(card, small=false) {
+  const s = small ? ' card-sm' : '';
+  if (!card || card.hidden) return `<div class="card${s} back"></div>`;
+  if (card.isJoker) return `<div class="card${s} joker"><div class="card-rank">★</div><div class="card-suit" style="font-size:7px">JKR</div></div>`;
   const col = (card.suit==='♥'||card.suit==='♦') ? 'red' : 'black';
-  return `<div class="card${small?' card-sm':''} ${col}"><div class="card-rank">${card.rank}</div><div class="card-suit">${card.suit}</div></div>`;
+  return `<div class="card${s} ${col}"><div class="card-rank">${card.rank}</div><div class="card-suit">${card.suit}</div></div>`;
 }
 
+// ════════════════════════════════════════════════════════════
+//  PHASE CONTROLS + SEQUENTIAL REVEAL
+// ════════════════════════════════════════════════════════════
 function renderControls(state) {
   const prompt = document.getElementById('phase-prompt');
   const btns   = document.getElementById('phase-buttons');
-  const me = state.players.find(p => p.id === myId);
-  const iAmBanker = me && state.players.indexOf(me) === state.bankerIdx;
   btns.innerHTML = '';
+  const myPlayer = state.players.find(p => p.id === myId);
 
   if (state.phase === 'bet') {
-    prompt.textContent = 'Place your bets, then host deals when everyone is ready.';
+    prompt.textContent = 'Place your bets. Host deals when everyone is ready.';
     if (isHost) {
       addBtn(btns, '🔄 Rotate Banker', 'btn', () => socket.emit('rotateBanker', { code: roomCode }));
       addBtn(btns, 'Deal Cards', 'btn btn-primary', () => socket.emit('deal', { code: roomCode }));
     }
   } else if (state.phase === 'set') {
-    const needToSet = state.players.filter((p,i) => i===state.bankerIdx ? p.hand.length>0 : !p.folded&&p.bet>0);
-    const setCount = needToSet.filter(p => p.handSet).length;
-    prompt.textContent = `Setting hands… ${setCount} / ${needToSet.length} ready`;
-    if (isHost) {
+    const active = state.players.filter((p,i) => i===state.bankerIdx ? p.hand.length>0 : !p.folded&&p.bet>0);
+    const ready  = active.filter(p => p.handSet).length;
+    prompt.textContent = `Setting hands… ${ready} / ${active.length} ready`;
+    if (myPlayer && myPlayer.hand.length > 0 && !myPlayer.handSet)
+      addBtn(btns, 'Set My Hand', 'btn btn-primary', openSetter);
+    if (isHost)
       addBtn(btns, 'Force Reveal', 'btn btn-danger', () => socket.emit('reveal', { code: roomCode }));
-    }
-    const myPlayer = state.players.find(p => p.id === myId);
-    if (myPlayer && myPlayer.hand.length > 0 && !myPlayer.handSet) {
-      addBtn(btns, 'Set My Hand', 'btn btn-primary', () => openSetter());
-    }
-  } else if (state.phase === 'reveal' || state.phase === 'done') {
-    prompt.textContent = state.phase === 'done' ? 'Round complete!' : 'All hands revealed!';
-    if (isHost && state.phase === 'done') {
-      addBtn(btns, 'Next Round', 'btn btn-primary', () => socket.emit('nextRound', { code: roomCode }));
+  } else if (state.phase === 'done') {
+    // Calculate how many active non-banker players there are
+    const activePlayers = state.players.filter((p,i) => i!==state.bankerIdx && p.hand.length>0 && !p.folded);
+    const allRevealed   = activePlayers.every(p => p.revealed);
+
+    if (!allRevealed) {
+      // Still flipping players — show "Flip Next Player" button for host
+      const nextUnrevealed = activePlayers.find(p => !p.revealed);
+      const nextName = nextUnrevealed ? nextUnrevealed.name : '';
+      prompt.textContent = `Banker revealed — flip each player's cards`;
+      if (isHost) {
+        addBtn(btns, `▶ Reveal ${nextName}`, 'btn btn-reveal', () => socket.emit('advanceReveal', { code: roomCode }));
+      }
+    } else {
+      prompt.textContent = 'Round complete!';
+      if (isHost)
+        addBtn(btns, 'Next Round', 'btn btn-primary', () => socket.emit('nextRound', { code: roomCode }));
     }
   }
 }
 
-function addBtn(container, label, cls, fn) {
+function addBtn(c, lbl, cls, fn) {
   const b = document.createElement('button');
-  b.className = cls; b.textContent = label; b.onclick = fn;
-  container.appendChild(b);
+  b.className = cls; b.textContent = lbl; b.onclick = fn; c.appendChild(b);
 }
-
 function updatePhaseBadge(phase) {
-  const badge = document.getElementById('phase-badge');
-  const map = { bet:'Betting', set:'Setting Hands', reveal:'Showdown', done:'Round Over', lobby:'Lobby' };
-  const cls = { bet:'phase-bet', set:'phase-set', reveal:'phase-reveal', done:'phase-reveal', lobby:'phase-lobby' };
-  badge.textContent = map[phase] || phase;
-  badge.className = `phase-badge ${cls[phase]||'phase-lobby'}`;
+  const el  = document.getElementById('phase-badge');
+  const map = { bet:'Betting', set:'Setting Hands', done:'Showdown', lobby:'Lobby' };
+  const cls = { bet:'phase-bet', set:'phase-set', done:'phase-done', lobby:'phase-lobby' };
+  el.textContent = map[phase] || phase;
+  el.className   = `phase-badge ${cls[phase]||'phase-lobby'}`;
 }
 
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 //  BET ACTIONS
-// ═══════════════════════════════════════════════════════════
-function placeBet(amount)       { socket.emit('placeBet',      { code: roomCode, amount }); }
-function clearBet()             { socket.emit('clearBet',      { code: roomCode }); }
-function placeBonusBet(amount)  { socket.emit('placeBonusBet', { code: roomCode, amount }); }
-function clearBonusBet()        { socket.emit('clearBonusBet', { code: roomCode }); }
+// ════════════════════════════════════════════════════════════
+function placeBet(a)      { socket.emit('placeBet',      { code:roomCode, amount:a }); }
+function clearBet()       { socket.emit('clearBet',      { code:roomCode }); }
+function placeBonusBet(a) { socket.emit('placeBonusBet', { code:roomCode, amount:a }); }
+function clearBonusBet()  { socket.emit('clearBonusBet', { code:roomCode }); }
 function doFold() {
   const me = gameState.players.find(p => p.id === myId);
-  if (me && me.folded) socket.emit('unfold', { code: roomCode });
-  else socket.emit('fold', { code: roomCode });
+  socket.emit(me && me.folded ? 'unfold' : 'fold', { code:roomCode });
 }
 
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 //  HAND SETTER
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 function openSetter() {
   const me = gameState.players.find(p => p.id === myId);
   if (!me || me.hand.length === 0) return;
-  tempHigh = []; tempLow = []; tempUnassigned = [...me.hand];
+  tempHigh=[]; tempLow=[]; tempUnassigned=[...me.hand];
+  setterTarget = 'high';
+  document.getElementById('setter-title').textContent = `${me.name}'s Hand`;
   document.getElementById('setter-sub').textContent =
-    `${me.name} · ${me.chips} chips · bet: ${me.bet}${me.bonusBet>0?' + bonus '+me.bonusBet:''}`;
+    `${me.chips} chips · bet: ${me.bet}${me.bonusBet>0?` + bonus ${me.bonusBet}`:''}`;
   document.getElementById('hand-setter').classList.add('open');
   renderSetter();
 }
-
-function closeSetter() {
-  document.getElementById('hand-setter').classList.remove('open');
-}
+function closeSetter() { document.getElementById('hand-setter').classList.remove('open'); }
 
 function renderSetter() {
-  // Unassigned
+  document.getElementById('high-hand-box').classList.toggle('active-target', setterTarget==='high');
+  document.getElementById('low-hand-box').classList.toggle('active-target',  setterTarget==='low');
+  const rem = setterTarget==='high' ? 5-tempHigh.length : 2-tempLow.length;
+  const hand = setterTarget==='high' ? 'High Hand' : 'Low Hand';
+  document.getElementById('target-ind').textContent =
+    tempLow.length===2 && tempHigh.length===5
+      ? '✓ All cards assigned — review and confirm'
+      : `▶ Filling: ${hand} (${rem} card${rem===1?'':'s'} remaining)`;
+
   document.getElementById('all-setter-cards').innerHTML =
-    tempUnassigned.map((c,i) => `<div onclick="assignCard(${i})">${renderCardClickable(c)}</div>`).join('');
-  // High
+    tempUnassigned.map((c,i) => `<div onclick="assignCard(${i})">${clickCard(c)}</div>`).join('');
   document.getElementById('high-hand-cards').innerHTML =
-    tempHigh.map((c,i) => `<div onclick="removeFromHigh(${i})">${renderCardClickable(c)}</div>`).join('') +
-    (tempHigh.length < 5 ? `<span style="font-size:11px;color:rgba(245,237,216,0.3);font-style:italic;">${5-tempHigh.length} more</span>` : '');
-  // Low
+    tempHigh.map((c,i) => `<div onclick="removeCard('high',${i})">${clickCard(c)}</div>`).join('') +
+    (tempHigh.length<5 ? `<span style="font-size:10px;color:rgba(245,237,216,.22);font-style:italic">${5-tempHigh.length} more</span>` : '');
   document.getElementById('low-hand-cards').innerHTML =
-    tempLow.map((c,i) => `<div onclick="removeFromLow(${i})">${renderCardClickable(c)}</div>`).join('') +
-    (tempLow.length < 2 ? `<span style="font-size:11px;color:rgba(245,237,216,0.3);font-style:italic;">${2-tempLow.length} more</span>` : '');
-  // Ranks
+    tempLow.map((c,i) => `<div onclick="removeCard('low',${i})">${clickCard(c)}</div>`).join('') +
+    (tempLow.length<2 ? `<span style="font-size:10px;color:rgba(245,237,216,.22);font-style:italic">${2-tempLow.length} more</span>` : '');
   document.getElementById('high-hand-rank').textContent = tempHigh.length===5 ? evalFiveClient(tempHigh) : '';
   document.getElementById('low-hand-rank').textContent  = tempLow.length===2  ? evalTwoClient(tempLow)   : '';
 }
 
-function renderCardClickable(card) {
-  if (card.isJoker) return `<div class="card clickable joker"><div class="card-rank">★</div><div class="card-suit" style="font-size:9px;">JOKER</div></div>`;
+function clickCard(card) {
+  if (card.isJoker) return `<div class="card clickable joker"><div class="card-rank">★</div><div class="card-suit" style="font-size:7px">JKR</div></div>`;
   const col = (card.suit==='♥'||card.suit==='♦') ? 'red' : 'black';
   return `<div class="card clickable ${col}"><div class="card-rank">${card.rank}</div><div class="card-suit">${card.suit}</div></div>`;
 }
-
 function assignCard(i) {
   const card = tempUnassigned[i];
-  if (tempHigh.length < 5)      { tempHigh.push(card); tempUnassigned.splice(i,1); }
-  else if (tempLow.length < 2)  { tempLow.push(card);  tempUnassigned.splice(i,1); }
-  else toast('Both hands full — remove a card first');
+  if (setterTarget==='high' && tempHigh.length<5) {
+    tempHigh.push(card); tempUnassigned.splice(i,1);
+    if (tempHigh.length===5) setterTarget='low';
+  } else if (setterTarget==='low' && tempLow.length<2) {
+    tempLow.push(card); tempUnassigned.splice(i,1);
+  } else {
+    toast('Both hands are full — tap a placed card to return it');
+  }
   renderSetter();
 }
-function removeFromHigh(i) { tempUnassigned.push(tempHigh.splice(i,1)[0]); renderSetter(); }
-function removeFromLow(i)  { tempUnassigned.push(tempLow.splice(i,1)[0]);  renderSetter(); }
-
-function requestHouseWay() { socket.emit('houseWay', { code: roomCode }); }
-
+function removeCard(hand, i) {
+  if (hand==='high') { tempUnassigned.push(tempHigh.splice(i,1)[0]); setterTarget='high'; }
+  else               { tempUnassigned.push(tempLow.splice(i,1)[0]);  setterTarget='low'; }
+  renderSetter();
+}
+function requestHouseWay() { socket.emit('houseWay', { code:roomCode }); }
 function confirmHand() {
-  if (tempHigh.length !== 5 || tempLow.length !== 2) {
-    toast('Need exactly 5 cards in High Hand and 2 in Low Hand'); return;
-  }
-  socket.emit('setHand', { code: roomCode, highHand: tempHigh, lowHand: tempLow });
+  if (tempHigh.length!==5||tempLow.length!==2) { toast('Need 5 cards in High Hand and 2 in Low Hand'); return; }
+  socket.emit('setHand', { code:roomCode, highHand:tempHigh, lowHand:tempLow });
   closeSetter();
 }
 
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 //  BUY-IN
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 function openBuyIn() {
   const me = gameState.players.find(p => p.id === myId);
   document.getElementById('buyin-sub').textContent = `${me.name} · stack: ${me.chips} chips`;
@@ -909,132 +952,132 @@ function openBuyIn() {
   document.getElementById('buyin-modal').classList.add('open');
 }
 function closeBuyIn() { document.getElementById('buyin-modal').classList.remove('open'); }
-function doBuyIn(amount) {
-  socket.emit('buyIn', { code: roomCode, amount });
-  toast(`Added ${amount} chips`);
-  closeBuyIn();
-}
+function doBuyIn(a) { socket.emit('buyIn',{code:roomCode,amount:a}); toast(`Added ${a} chips`); closeBuyIn(); }
 function doBuyInCustom() {
   const v = parseInt(document.getElementById('buyin-custom').value);
-  if (!v || v < 1) { toast('Enter a valid amount'); return; }
+  if (!v||v<1) { toast('Enter a valid amount'); return; }
   doBuyIn(v);
 }
 
-// ═══════════════════════════════════════════════════════════
-//  STATS
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+//  STATS — includes Session Best Hand trophy
+// ════════════════════════════════════════════════════════════
 function showStats() {
   if (!gameState) return;
-  const hb = gameState.houseBonus || { collected:0, paid:0, rounds:0 };
-  const houseNet = hb.collected - hb.paid;
-  const hnStr = houseNet >= 0 ? `+${houseNet}` : `${houseNet}`;
-  const hnCls = houseNet > 0 ? 'result-pos' : houseNet < 0 ? 'result-neg' : '';
+  const sbh = gameState.sessionBestHand;
+  const hb  = gameState.houseBonus || {collected:0,paid:0,rounds:0};
+  const hn  = hb.collected - hb.paid;
+  const hnStr = hn >= 0 ? `+${hn}` : `${hn}`;
 
-  const houseSummary = `<div class="stat-card" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(160,80,200,0.12),rgba(100,40,160,0.08));border-color:rgba(160,80,200,0.35);">
-    <div class="stat-player" style="color:#c080f0;border-color:rgba(160,80,200,0.25);">🎰 House Bonus Ledger</div>
-    <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:4px;">
-      <div style="text-align:center;">
-        <div style="font-family:'Cinzel',serif;font-size:10px;color:rgba(245,237,216,0.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Collected</div>
-        <div style="font-family:'Cinzel',serif;font-size:18px;color:#5dde8a;font-weight:700;">+${hb.collected}</div>
-        <div style="font-size:11px;color:rgba(245,237,216,0.3);font-style:italic;">losing bonus bets</div>
-      </div>
-      <div style="text-align:center;">
-        <div style="font-family:'Cinzel',serif;font-size:10px;color:rgba(245,237,216,0.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Paid Out</div>
-        <div style="font-family:'Cinzel',serif;font-size:18px;color:#f08080;font-weight:700;">-${hb.paid}</div>
-        <div style="font-size:11px;color:rgba(245,237,216,0.3);font-style:italic;">winning payouts</div>
-      </div>
-      <div style="text-align:center;">
-        <div style="font-family:'Cinzel',serif;font-size:10px;color:rgba(245,237,216,0.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">House Net</div>
-        <div style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;" class="${hnCls}">${hnStr}</div>
-        <div style="font-size:11px;color:rgba(245,237,216,0.3);font-style:italic;">over ${hb.rounds} bet${hb.rounds!==1?'s':''}</div>
-      </div>
-    </div>
-  </div>`;
+  // Best hand trophy
+  let bestHTML;
+  if (sbh) {
+    const bankerTag = sbh.isBanker ? ' <span style="font-size:10px;color:rgba(201,168,76,.5)">(as Banker)</span>' : '';
+    bestHTML = `
+      <div class="best-hand-block">
+        <div class="best-hand-crown">🏆</div>
+        <div class="best-hand-label">Session Best High Hand</div>
+        <div class="best-hand-name">${esc(sbh.handName)}</div>
+        <div class="best-hand-who">held by <span>${esc(sbh.playerName)}</span>${bankerTag}</div>
+        <div class="best-hand-round">Round ${sbh.round}</div>
+      </div>`;
+  } else {
+    bestHTML = `
+      <div class="best-hand-block">
+        <div class="best-hand-crown" style="opacity:.3">🏆</div>
+        <div class="best-hand-label">Session Best High Hand</div>
+        <div class="best-hand-empty">No hands played yet</div>
+      </div>`;
+  }
 
-  document.getElementById('stats-grid').innerHTML = houseSummary + gameState.players.map(p => {
-    const s = p.stats;
-    const net = s.netChips;
-    const ns = net>0?`+${net}`:net;
-    const nc = net>0?'result-pos':net<0?'result-neg':'';
+  // House bonus ledger
+  const houseHTML = `
+    <div class="stat-card house-block">
+      <div class="stat-player">🎰 House Bonus Ledger</div>
+      <div class="house-nums">
+        <div class="house-num"><div class="house-num-lbl">Collected</div><div class="house-num-val" style="color:#5dde8a">+${hb.collected}</div><div style="font-size:9px;color:rgba(245,237,216,.3)">losing bets</div></div>
+        <div class="house-num"><div class="house-num-lbl">Paid Out</div><div class="house-num-val" style="color:#f08080">-${hb.paid}</div><div style="font-size:9px;color:rgba(245,237,216,.3)">winning payouts</div></div>
+        <div class="house-num"><div class="house-num-lbl">House Net</div><div class="house-num-val ${hn>=0?'nc-pos':'nc-neg'}">${hnStr}</div><div style="font-size:9px;color:rgba(245,237,216,.3)">over ${hb.rounds} bet${hb.rounds!==1?'s':''}</div></div>
+      </div>
+    </div>`;
+
+  // Player cards
+  const playerHTML = gameState.players.map(p => {
+    const s=p.stats, net=s.netChips, nc=net>0?'nc-pos':net<0?'nc-neg':'';
+    const ns=net>0?`+${net}`:net;
     return `<div class="stat-card">
-      <div class="stat-player">${p.name}${p.id===myId?' (You)':''}</div>
+      <div class="stat-player">${esc(p.name)}${p.id===myId?' (You)':''}</div>
       <div class="stat-row"><span>Chips</span><span class="val">${p.chips}</span></div>
       <div class="stat-row"><span>Net</span><span class="val ${nc}">${ns}</span></div>
       <div class="stat-row"><span>Wins</span><span class="val" style="color:#5dde8a">${s.wins}</span></div>
       <div class="stat-row"><span>Losses</span><span class="val" style="color:#f08080">${s.losses}</span></div>
       <div class="stat-row"><span>Pushes</span><span class="val">${s.pushes}</span></div>
       <div class="stat-row"><span>Rounds</span><span class="val">${s.rounds}</span></div>
-      ${s.buyins?`<div class="stat-row"><span>Re-bought</span><span class="val" style="color:rgba(245,237,216,0.5)">+${s.buyins}</span></div>`:''}
+      ${s.buyins?`<div class="stat-row"><span>Re-bought</span><span class="val" style="color:rgba(245,237,216,.5)">+${s.buyins}</span></div>`:''}
     </div>`;
   }).join('');
+
+  document.getElementById('stats-content').innerHTML =
+    bestHTML + `<div class="stats-grid">${houseHTML}${playerHTML}</div>`;
   document.getElementById('stats-panel').classList.add('open');
 }
 function hideStats() { document.getElementById('stats-panel').classList.remove('open'); }
 
-// ═══════════════════════════════════════════════════════════
-//  CLIENT-SIDE HAND EVALUATION (display only)
-// ═══════════════════════════════════════════════════════════
-const RANK_VAL = {2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
-
+// ════════════════════════════════════════════════════════════
+//  CLIENT-SIDE HAND EVALUATION (display labels only)
+// ════════════════════════════════════════════════════════════
+const RV = {2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
 function evalFiveClient(cards) {
-  if (!cards || cards.length !== 5 || cards.some(c=>c.hidden)) return '?';
-  if (cards.some(c => c.isJoker)) return evalFiveJokerClient(cards);
-  return evalFiveNJClient(cards).name;
-}
-function evalFiveJokerClient(cards) {
-  const suits = ['♠','♥','♦','♣'], ranks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
-  const others = cards.filter(c=>!c.isJoker);
-  let best = {rank:-1,name:''};
-  for (const s of suits) for (const r of ranks) {
-    const t = [...others,{rank:r,suit:s,isJoker:false}];
-    const v = evalFiveNJClient(t);
-    if (v.rank > best.rank) best = v;
+  if (!cards||cards.length!==5||cards.some(c=>c.hidden)) return '?';
+  if (cards.some(c=>c.isJoker)) {
+    const o=cards.filter(c=>!c.isJoker); let best={rank:-1,name:''};
+    for(const s of['♠','♥','♦','♣']) for(const r of['2','3','4','5','6','7','8','9','10','J','Q','K','A']){
+      const v=evalNJ([...o,{rank:r,suit:s}]); if(v.rank>best.rank) best=v;
+    }
+    return best.name;
   }
-  return best.name;
+  return evalNJ(cards).name;
 }
-function evalFiveNJClient(cards) {
-  const rv = cards.map(c=>RANK_VAL[c.rank]).sort((a,b)=>b-a);
-  const suits = cards.map(c=>c.suit);
-  const counts = {}; rv.forEach(v=>counts[v]=(counts[v]||0)+1);
-  const freq = Object.values(counts).sort((a,b)=>b-a);
-  const isFlush = suits.every(s=>s===suits[0]);
-  const uv = [...new Set(rv)]; const isStraight = (uv.length===5&&(uv[0]-uv[4]===4||JSON.stringify(uv)==='[14,5,4,3,2]'));
-  if(isFlush&&isStraight) return {rank:8,name:rv[0]===14?'Royal Flush':'Straight Flush'};
+function evalNJ(cards) {
+  const rv=cards.map(c=>RV[c.rank]).sort((a,b)=>b-a);
+  const suits=cards.map(c=>c.suit);
+  const cnt={}; rv.forEach(v=>cnt[v]=(cnt[v]||0)+1);
+  const freq=Object.values(cnt).sort((a,b)=>b-a);
+  const fl=suits.every(s=>s===suits[0]);
+  const uv=[...new Set(rv)];
+  const st=uv.length===5&&(uv[0]-uv[4]===4||JSON.stringify(uv)==='[14,5,4,3,2]');
+  if(fl&&st) return {rank:8,name:rv[0]===14?'Royal Flush':'Straight Flush'};
   if(freq[0]===4) return {rank:7,name:'Four of a Kind'};
   if(freq[0]===3&&freq[1]===2) return {rank:6,name:'Full House'};
-  if(isFlush) return {rank:5,name:'Flush'};
-  if(isStraight) return {rank:4,name:'Straight'};
+  if(fl) return {rank:5,name:'Flush'};
+  if(st) return {rank:4,name:'Straight'};
   if(freq[0]===3) return {rank:3,name:'Three of a Kind'};
   if(freq[0]===2&&freq[1]===2) return {rank:2,name:'Two Pair'};
   if(freq[0]===2) return {rank:1,name:'One Pair'};
   return {rank:0,name:'High Card'};
 }
 function evalTwoClient(cards) {
-  if (!cards || cards.length !== 2 || cards.some(c=>c.hidden)) return '?';
-  const rv = cards.map(c=>c.isJoker?14:RANK_VAL[c.rank]).sort((a,b)=>b-a);
-  return rv[0]===rv[1] ? 'Pair' : 'High Card';
+  if(!cards||cards.length!==2||cards.some(c=>c.hidden)) return '?';
+  const rv=cards.map(c=>c.isJoker?14:RV[c.rank]).sort((a,b)=>b-a);
+  return rv[0]===rv[1]?'Pair':'High Card';
 }
 
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 //  UTILS
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-
-function toast(msg, duration=2800) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), duration);
+function toast(msg, dur=2800) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),dur);
 }
-
-// Auto-uppercase room code input
-document.getElementById('join-code').addEventListener('input', function() {
-  this.value = this.value.toUpperCase();
-});
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+document.getElementById('join-code').addEventListener('input', function(){ this.value=this.value.toUpperCase(); });
 </script>
 </body>
 </html>

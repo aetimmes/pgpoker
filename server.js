@@ -130,17 +130,299 @@ function compareTwo(a, b) {
 }
 
 // ─── HOUSE WAY ───────────────────────────────────────────────────────────────
+// Returns { high: Card[5], low: Card[2] }
 function applyHouseWay(cards) {
-  let best = null, bestScore = -Infinity;
-  for (let i = 0; i < 7; i++) for (let j = i + 1; j < 7; j++) {
-    const low = [cards[i], cards[j]];
-    const high = cards.filter((_, k) => k !== i && k !== j);
-    const twoEv = evalTwoHand(low);
-    const fiveEv = evalFiveHand(high);
-    const score = fiveEv.rank * 1000 + twoEv.rank * 10;
-    if (score > bestScore) { bestScore = score; best = { high, low }; }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  const rv = c => c.isJoker ? 14.5 : RANK_VAL[c.rank];
+
+  // Remove `used` cards from `pool` by identity key
+  function without(pool, used) {
+    const keys = used.map(c => c.isJoker ? 'JKR' : `${c.rank}${c.suit}`);
+    const seen = {};
+    return pool.filter(c => {
+      const k = c.isJoker ? 'JKR' : `${c.rank}${c.suit}`;
+      if (keys.includes(k) && !seen[k]) { seen[k] = true; return false; }
+      return true;
+    });
   }
-  return best || { high: cards.slice(0, 5), low: cards.slice(5, 7) };
+
+  // Pick up to n cards of rank from pool (naturals preferred over joker)
+  function pick(rank, n, pool) {
+    const nats = pool.filter(c => !c.isJoker && c.rank === rank);
+    const jkrs = pool.filter(c => c.isJoker);
+    const out = [];
+    for (const c of nats) { if (out.length < n) out.push(c); }
+    if (out.length < n && jkrs.length) out.push(jkrs[0]);
+    return out;
+  }
+
+  function topN(pool, n) {
+    return [...pool].sort((a, b) => rv(b) - rv(a)).slice(0, n);
+  }
+
+  function make(low, all) {
+    return { high: without(all, low), low };
+  }
+
+  // ── Build rank inventory ───────────────────────────────────────────────────
+  const hasJoker = cards.some(c => c.isJoker);
+  const nats     = cards.filter(c => !c.isJoker);
+  const cnt      = {};
+  nats.forEach(c => cnt[c.rank] = (cnt[c.rank] || 0) + 1);
+  // Joker counts as an Ace for pairing/grouping purposes
+  if (hasJoker) cnt['A'] = (cnt['A'] || 0) + 1;
+
+  const byCount = n =>
+    Object.entries(cnt).filter(([, c]) => c === n)
+      .map(([r]) => r)
+      .sort((a, b) => RANK_VAL[b] - RANK_VAL[a]);
+
+  const quads  = byCount(4);   // ranks with exactly 4
+  const trips  = byCount(3);   // ranks with exactly 3
+  const pairs  = byCount(2);   // ranks with exactly 2
+  // singles are everything else (count === 1)
+
+  // ── Straight / Flush detectors on a 5-card subset ─────────────────────────
+  function isStraight5(five) {
+    const vals = five.map(c => c.isJoker ? 14 : RANK_VAL[c.rank]).sort((a, b) => b - a);
+    const uniq = [...new Set(vals)];
+    if (uniq.length !== 5) return false;
+    if (uniq[0] - uniq[4] === 4) return true;
+    if (JSON.stringify(uniq) === '[14,5,4,3,2]') return true; // wheel
+    return false;
+  }
+  function isFlush5(five) {
+    const suits = five.map(c => c.suit).filter(s => s); // joker has no suit
+    if (suits.length < 5) {
+      // joker is present — check if the 4 naturals share a suit
+      return suits.every(s => s === suits[0]);
+    }
+    return suits.every(s => s === suits[0]);
+  }
+  function isSF5(five) { return isStraight5(five) && isFlush5(five); }
+
+  // All 7-choose-5 combos
+  function allFive(pool) {
+    const out = [];
+    for (let i = 0; i < pool.length; i++)
+      for (let j = i+1; j < pool.length; j++) {
+        const two = [pool[i], pool[j]];
+        out.push({ five: without(pool, two), two });
+      }
+    return out;
+  }
+
+  // ── 5-ACE CHECK (must come before quads since joker makes "5 aces") ────────
+  const aceCount = (cnt['A'] || 0); // includes joker-as-ace
+  const hasFiveAces = hasJoker && aceCount >= 5; // 4 natural aces + joker
+
+  if (hasFiveAces) {
+    // Exception: if also have a pair of Kings, play Kings in low hand
+    const kingCards = cards.filter(c => !c.isJoker && c.rank === 'K');
+    if (kingCards.length >= 2) {
+      const low = kingCards.slice(0, 2);
+      return make(low, cards);
+    }
+    // Default five aces: play two aces in low hand
+    const allAces = cards.filter(c => !c.isJoker && c.rank === 'A');
+    const low = allAces.slice(0, 2);
+    return make(low, cards);
+  }
+
+  // ── FOUR OF A KIND ────────────────────────────────────────────────────────
+  if (quads.length > 0) {
+    const qRank = quads[0];
+    const qVal  = RANK_VAL[qRank];
+    const qCards = pick(qRank, 4, cards);
+    const rest   = without(cards, qCards);
+
+    // Four of a Kind with a Pair (or Trips) in the remaining cards → pair/trips low
+    const restCnt = {};
+    rest.forEach(c => { const k = c.isJoker ? 'A' : c.rank; restCnt[k] = (restCnt[k]||0)+1; });
+    const restPairRanks = Object.entries(restCnt).filter(([,c])=>c>=2).map(([r])=>r).sort((a,b)=>RANK_VAL[b]-RANK_VAL[a]);
+    if (restPairRanks.length > 0) {
+      const low = pick(restPairRanks[0], 2, rest);
+      return make(low, cards);
+    }
+
+    // 2–6: never split
+    if (qVal <= 6) {
+      return make(topN(rest, 2), cards);
+    }
+    // 7–10: split unless Ace available in rest to play low (keep quads high)
+    if (qVal <= 10) {
+      const restAce = rest.find(c => c.isJoker || c.rank === 'A');
+      if (restAce) {
+        // Keep quads high; Ace + next best in low
+        const otherRest = without(rest, [restAce]).sort((a,b)=>rv(b)-rv(a));
+        const low = [restAce, otherRest[0]];
+        return make(low, cards);
+      }
+      // No ace: split quads 2-2
+      const low = qCards.slice(0, 2);
+      return make(low, cards);
+    }
+    // J, Q, K, A: always split
+    const low = qCards.slice(0, 2);
+    return make(low, cards);
+  }
+
+  // ── FULL HOUSE variants ───────────────────────────────────────────────────
+  // Full House = trips + pair (or trips + two-pair, or trips + trips)
+  if (trips.length >= 2) {
+    // Two trips: play pair from HIGHEST trips in low hand
+    const highTripCards = pick(trips[0], 3, cards);
+    const low = highTripCards.slice(0, 2);
+    return make(low, cards);
+  }
+
+  if (trips.length === 1 && pairs.length >= 2) {
+    // Trips + Two Pair: play highest pair in low
+    const low = pick(pairs[0], 2, cards);
+    return make(low, cards);
+  }
+
+  if (trips.length === 1 && pairs.length === 1) {
+    // Classic full house: always split, pair in low
+    const low = pick(pairs[0], 2, cards);
+    return make(low, cards);
+  }
+
+  // ── THREE OF A KIND (no pair) ─────────────────────────────────────────────
+  if (trips.length === 1 && pairs.length === 0) {
+    const tRank = trips[0];
+
+    // Check for straight/flush possibilities — play pair of trips in low if SF/straight/flush preserved
+    const tCards  = pick(tRank, 3, cards);
+    const nonTrip = without(cards, tCards);
+    // Try keeping 2 of the trips in high (with the non-trip cards) + 1 trip card in low
+    // Look for best 5-card hand among the 6 cards that aren't the card we split off
+    // (Rule: Three of a Kind — play pair in low if SF/straight/flush preserved)
+    let sfCombo = null;
+    for (let i = 0; i < tCards.length; i++) {
+      const oneOut  = [tCards[i]];
+      const fivePool = without(cards, oneOut);
+      for (const { five, two } of allFive(fivePool)) {
+        if (isSF5(five) || isStraight5(five) || isFlush5(five)) {
+          // Found a straight/flush — play the remaining trip card + best of two in low
+          const lowCard = oneOut[0];
+          // We need exactly 2 for low: the split-off trip card + best remaining single
+          const remainFor2 = without(cards, five);
+          // remainFor2 has 2 cards; use both as low
+          if (remainFor2.length === 2) {
+            sfCombo = { five, low: remainFor2 };
+            break;
+          }
+        }
+      }
+      if (sfCombo) break;
+    }
+
+    if (sfCombo) return { high: sfCombo.five, low: sfCombo.low };
+
+    // Exception: three Aces → one Ace + highest non-Ace kicker in low; two Aces in high
+    if (tRank === 'A') {
+      const aceCards  = pick('A', 3, cards);
+      const nonAces   = without(cards, aceCards).sort((a,b) => rv(b) - rv(a));
+      const oneAce    = aceCards[0];
+      const kicker    = nonAces[0];
+      const low       = [oneAce, kicker];
+      return make(low, cards);
+    }
+
+    // All other trips: keep in high, top-2 remaining in low
+    return make(topN(nonTrip, 2), cards);
+  }
+
+  // ── THREE PAIR ────────────────────────────────────────────────────────────
+  if (pairs.length >= 3) {
+    // Play highest pair in low hand
+    const low = pick(pairs[0], 2, cards);
+    return make(low, cards);
+  }
+
+  // ── TWO PAIR ──────────────────────────────────────────────────────────────
+  if (pairs.length === 2) {
+    const hiRank = pairs[0], loRank = pairs[1];
+    const hiVal  = RANK_VAL[hiRank], loVal = RANK_VAL[loRank];
+
+    // Both pairs J+ → always split; play low pair in low hand
+    const bothHighCard = hiVal >= 11 && loVal >= 11;
+    // One pair 7–10 with the other being J+ → split, low pair in low
+    const midHigh = (loVal >= 7 && loVal <= 10) && hiVal >= 11;
+
+    if (bothHighCard || midHigh) {
+      return make(pick(loRank, 2, cards), cards);
+    }
+
+    // Extra Ace or Joker beyond the pairs → keep both pairs high, Ace/Joker + kicker in low
+    const pairCards = [...pick(hiRank, 2, cards), ...pick(loRank, 2, cards)];
+    const rest = without(cards, pairCards);
+    const freeAce = rest.find(c => c.isJoker || c.rank === 'A');
+    if (freeAce) {
+      const kicker = without(rest, [freeAce]).sort((a,b)=>rv(b)-rv(a))[0];
+      return make([freeAce, kicker], cards);
+    }
+
+    // Default: split, low pair in low hand
+    return make(pick(loRank, 2, cards), cards);
+  }
+
+  // ── ONE PAIR ──────────────────────────────────────────────────────────────
+  if (pairs.length === 1) {
+    const pRank  = pairs[0];
+    const pVal   = RANK_VAL[pRank];
+    const pCards = pick(pRank, 2, cards);
+    const rest   = without(cards, pCards).sort((a, b) => rv(b) - rv(a));
+
+    // Check if a straight/flush/SF exists in 5 of the 7 cards
+    // Rule: play pair in low if SF/straight/flush preserved in high
+    // Exception: pair of 10s+ with an Ace or face card → play pair in high instead
+    let bestSFHand = null;
+    for (const { five, two } of allFive(cards)) {
+      if (isSF5(five) || isStraight5(five) || isFlush5(five)) {
+        // Check if this combo frees up a better low hand
+        if (!bestSFHand || rv(two[0]) + rv(two[1]) > rv(bestSFHand.two[0]) + rv(bestSFHand.two[1])) {
+          bestSFHand = { five, two };
+        }
+      }
+    }
+
+    if (bestSFHand) {
+      // Exception: pair of 10s or better + Ace or face (J/Q/K) → play pair high
+      const pairIsHighEnough = pVal >= 10;
+      const twoHasAceOrFace  = bestSFHand.two.some(c => (c.isJoker || RANK_VAL[c.rank] >= 11));
+      if (pairIsHighEnough && twoHasAceOrFace) {
+        // Play pair in high hand as normal (fall through)
+      } else {
+        // Play pair in low hand, SF/straight/flush in high
+        return { high: bestSFHand.five, low: bestSFHand.two };
+      }
+    }
+
+    // Standard one pair: pair in high, top-2 remaining in low
+    const low = rest.slice(0, 2);
+    const high = [...pCards, ...rest.slice(2)];
+    return { high, low };
+  }
+
+  // ── NO PAIR (includes straights / flushes with no pair) ───────────────────
+  // Find all valid straight/flush/SF combos; pick the one with highest two-card low
+  let bestNoP = null;
+  for (const { five, two } of allFive(cards)) {
+    if (isSF5(five) || isStraight5(five) || isFlush5(five)) {
+      const twoVal = rv(two[0]) + rv(two[1]);
+      if (!bestNoP || twoVal > rv(bestNoP.two[0]) + rv(bestNoP.two[1])) {
+        bestNoP = { five, two };
+      }
+    }
+  }
+  if (bestNoP) return { high: bestNoP.five, low: bestNoP.two };
+
+  // Pure no pair, no straight/flush: 2nd and 3rd highest in low
+  const desc = [...cards].sort((a, b) => rv(b) - rv(a));
+  return make([desc[1], desc[2]], cards);
 }
 
 // ─── BONUS EVALUATION ────────────────────────────────────────────────────────
@@ -242,6 +524,8 @@ function makeGame(hostId, hostName, startingChips, bonusPayouts) {
     startingChips,
     bonusPayouts,
     houseBonus: { collected: 0, paid: 0, rounds: 0 },
+    sessionBestHand: null,
+    revealStep: -1,
     players: [{
       id: hostId,
       name: hostName,
@@ -258,6 +542,7 @@ function makeGame(hostId, hostName, startingChips, bonusPayouts) {
       bonusNet: null,
       bonusLabel: '',
       bonusWon: false,
+      revealed: false,
       stats: { wins: 0, losses: 0, pushes: 0, rounds: 0, netChips: 0, buyins: 0 }
     }]
   };
@@ -274,6 +559,7 @@ function safeState(room, forSocketId) {
     startingChips: g.startingChips,
     bonusPayouts: g.bonusPayouts,
     houseBonus: g.houseBonus,
+    bankerAceHighPush: g.bankerAceHighPush || false,
     players: g.players.map(p => {
       const isMe = p.id === forSocketId;
       const isRevealing = g.phase === 'reveal' || g.phase === 'done';
@@ -290,13 +576,16 @@ function safeState(room, forSocketId) {
         bonusNet: p.bonusNet,
         bonusLabel: p.bonusLabel,
         bonusWon: p.bonusWon,
+        revealed: p.revealed,
         stats: p.stats,
-        // Hand cards: visible to owner always, to all during reveal
-        hand: (isMe || isRevealing) ? p.hand : (p.hand.length > 0 ? p.hand.map(() => ({ hidden: true })) : []),
-        highHand: (isMe || isRevealing) ? p.highHand : (p.highHand.length > 0 ? p.highHand.map(() => ({ hidden: true })) : []),
-        lowHand: (isMe || isRevealing) ? p.lowHand : (p.lowHand.length > 0 ? p.lowHand.map(() => ({ hidden: true })) : []),
+        // Hand cards: visible to owner always, to all after their reveal step
+        hand: (isMe || p.revealed) ? p.hand : (p.hand.length > 0 ? p.hand.map(() => ({ hidden: true })) : []),
+        highHand: (isMe || p.revealed) ? p.highHand : (p.highHand.length > 0 ? p.highHand.map(() => ({ hidden: true })) : []),
+        lowHand: (isMe || p.revealed) ? p.lowHand : (p.lowHand.length > 0 ? p.lowHand.map(() => ({ hidden: true })) : []),
       };
-    })
+    }),
+    sessionBestHand: g.sessionBestHand,
+    revealStep: g.revealStep,
   };
 }
 
@@ -315,6 +604,9 @@ function settleRound(room) {
   const bankerHigh = evalFiveHand(banker.highHand);
   const bankerLow = evalTwoHand(banker.lowHand);
 
+  // Ace-high push rule: if banker's high hand is Ace-high (rank 0, top card = Ace), all active players push
+  const bankerAceHighPush = bankerHigh.rank === 0 && bankerHigh.tiebreak[0] === 14;
+
   g.players.forEach((p, idx) => {
     if (idx === g.bankerIdx || p.folded || p.bet === 0) return;
     const pHigh = evalFiveHand(p.highHand);
@@ -323,9 +615,12 @@ function settleRound(room) {
     const lowWin = compareTwo(pLow, bankerLow);
 
     let result, net;
-    if (highWin > 0 && lowWin > 0)       { net =  p.bet; result = 'win'; }
-    else if (highWin < 0 && lowWin < 0)  { net = -p.bet; result = 'lose'; }
-    else                                  { net = 0;      result = 'push'; }
+    if (bankerAceHighPush) {
+      // Banker has Ace-high: push all around regardless
+      net = 0; result = 'push';
+    } else if (highWin > 0 && lowWin > 0)      { net =  p.bet; result = 'win'; }
+    else if (highWin < 0 && lowWin < 0)         { net = -p.bet; result = 'lose'; }
+    else                                         { net = 0;      result = 'push'; }
 
     p.chips += net;
     banker.chips -= net;
@@ -360,6 +655,34 @@ function settleRound(room) {
     p.bonusWon = bonusWon;
   });
 
+  g.bankerAceHighPush = bankerAceHighPush;
+
+  // Track session best hand (highest high-hand rank across all active players including banker)
+  const activePlayers = g.players.filter((p, i) => p.hand.length > 0);
+  activePlayers.forEach((p, _) => {
+    if (p.highHand.length !== 5) return;
+    const ev = evalFiveHand(p.highHand);
+    const isBanker = g.players.indexOf(p) === g.bankerIdx;
+    const handScore = ev.rank * 1000 + (ev.tiebreak[0] || 0);
+    const bestScore = g.sessionBestHand
+      ? g.sessionBestHand.rank * 1000 + (g.sessionBestHand.tiebreak0 || 0)
+      : -1;
+    if (handScore > bestScore) {
+      g.sessionBestHand = {
+        playerName: p.name,
+        handName: ev.name,
+        rank: ev.rank,
+        tiebreak0: ev.tiebreak[0] || 0,
+        isBanker,
+        round: g.round,
+      };
+    }
+  });
+
+  // Sequential reveal: start at step 0 (banker shown). Players revealed via advanceReveal socket event.
+  g.revealStep = 0;
+  // Mark banker as revealed immediately
+  g.players[g.bankerIdx].revealed = true;
   g.phase = 'done';
 }
 
@@ -391,6 +714,7 @@ io.on('connection', (socket) => {
       hand: [], highHand: [], lowHand: [],
       handSet: false, folded: false,
       result: null, netChips: null, bonusNet: null, bonusLabel: '', bonusWon: false,
+      revealed: false,
       stats: { wins: 0, losses: 0, pushes: 0, rounds: 0, netChips: 0, buyins: 0 }
     });
     socket.join(code);
@@ -545,9 +869,11 @@ io.on('connection', (socket) => {
       p.handSet = false; p.folded = false;
       p.result = null; p.netChips = null;
       p.bonusNet = null; p.bonusLabel = ''; p.bonusWon = false;
+      p.revealed = false;
     });
     g.bankerIdx = (g.bankerIdx + 1) % g.players.length;
     g.round++;
+    g.revealStep = -1;
     g.phase = 'bet';
     broadcastState(code);
   });
@@ -568,6 +894,23 @@ io.on('connection', (socket) => {
     if (!p || amount < 1) return;
     p.chips += amount;
     p.stats.buyins += amount;
+    broadcastState(code);
+  });
+
+  // Advance reveal — host clicks to flip next player's cards
+  socket.on('advanceReveal', ({ code }) => {
+    const g = rooms[code];
+    if (!g || g.phase !== 'done') return;
+    // Build ordered list of non-banker active players in seat order
+    const activePlayers = g.players
+      .map((p, i) => ({ p, i }))
+      .filter(({ p, i }) => i !== g.bankerIdx && p.hand.length > 0 && !p.folded);
+    // revealStep 0 = banker already shown; 1..N = reveal activePlayers[0..N-1]
+    const nextIdx = g.revealStep; // activePlayers index to reveal next
+    if (nextIdx < activePlayers.length) {
+      activePlayers[nextIdx].p.revealed = true;
+      g.revealStep++;
+    }
     broadcastState(code);
   });
 
