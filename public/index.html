@@ -108,132 +108,191 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
 /* ══════════════════════════════════════════════════════════
    CASINO TABLE
 ══════════════════════════════════════════════════════════ */
-.table-wrap{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:8px 10px 0;min-height:0}
-
-/* The oval table surface */
+.table-wrap{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:6px 8px 0;min-height:0}
 .casino-table{
-  flex:1;min-height:0;position:relative;
-  /* Oval via border-radius */
-  background:
-    radial-gradient(ellipse at 50% 35%,#236b3e 0%,#1a5230 40%,#103020 75%,#08180e 100%);
+  flex:1;min-height:0;position:relative;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 30%,#236b3e 0%,#1a5230 45%,#103020 80%,#08180e 100%);
   border-radius:50% / 38%;
   border:6px solid #0a1a0e;
-  box-shadow:
-    0 0 0 3px #1a2a1a,
-    0 0 0 6px #0a0f0a,
-    inset 0 0 80px rgba(0,0,0,.45),
-    0 12px 60px rgba(0,0,0,.8);
+  box-shadow:0 0 0 3px #1a2a1a,0 0 0 6px #0a0f0a,inset 0 0 80px rgba(0,0,0,.45),0 12px 60px rgba(0,0,0,.8);
   display:flex;flex-direction:column;
-  overflow:hidden;
 }
+.casino-table::before{content:'';position:absolute;inset:10px;
+  border:2px solid rgba(201,168,76,.08);border-radius:50% / 38%;pointer-events:none;z-index:0}
+.felt-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Cinzel Decorative',serif;font-size:clamp(12px,1.8vw,20px);
+  color:rgba(201,168,76,.05);letter-spacing:4px;text-transform:uppercase;
+  pointer-events:none;white-space:nowrap;z-index:0}
 
-/* Rail line inside the felt */
-.casino-table::before{
-  content:'';position:absolute;
-  inset:10px;
-  border:2px solid rgba(201,168,76,.1);
-  border-radius:50% / 38%;
-  pointer-events:none;z-index:0;
+/* ── DEAL ORDER PUCK ─────────────────────────────────────── */
+.deal-puck{
+  position:absolute;top:50%;right:14%;transform:translateY(-50%);
+  z-index:5;text-align:center;pointer-events:none;
 }
-
-/* Watermark */
-.felt-watermark{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  font-family:'Cinzel Decorative',serif;font-size:clamp(14px,2vw,22px);
-  color:rgba(201,168,76,.06);letter-spacing:4px;text-transform:uppercase;
-  pointer-events:none;white-space:nowrap;z-index:0;
+.deal-puck-inner{
+  width:52px;height:52px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#e8c840,#8a6010);
+  border:3px solid var(--gold-l);
+  box-shadow:0 0 20px rgba(201,168,76,.5),0 4px 10px rgba(0,0,0,.6);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  animation:puck-drop .5s cubic-bezier(.22,.61,.36,1);
 }
+@keyframes puck-drop{
+  0%{transform:scale(0) rotate(-180deg);opacity:0}
+  70%{transform:scale(1.15) rotate(5deg);opacity:1}
+  100%{transform:scale(1) rotate(0deg);opacity:1}
+}
+.deal-puck-num{font-family:'Cinzel Decorative',serif;font-size:22px;font-weight:700;
+  color:#1a0a00;line-height:1;text-shadow:0 1px 2px rgba(255,255,255,.3)}
+.deal-puck-lbl{font-family:'Cinzel',serif;font-size:7px;letter-spacing:1px;
+  text-transform:uppercase;color:rgba(30,15,0,.7)}
 
-/* ── DEALER BOOTH ──────────────────────────────────────── */
-.dealer-booth{
-  flex-shrink:0;
-  background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.25) 100%);
+/* ── DEALER BOOTH ────────────────────────────────────────── */
+.dealer-booth{flex-shrink:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.2));
   border-bottom:3px solid var(--gold-d);
-  /* curved top rail */
   border-radius:50% 50% 0 0 / 60% 60% 0 0;
-  padding:8px 18% 10px;
-  text-align:center;
-  position:relative;z-index:2;
-}
-.dealer-booth::after{
-  content:'';position:absolute;
-  bottom:-2px;left:10%;right:10%;height:1px;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);
-}
-.dealer-label{
-  font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;
-  color:rgba(201,168,76,.35);margin-bottom:5px;
-}
+  padding:8px 12% 10px;text-align:center;position:relative;z-index:2}
+.dealer-booth::after{content:'';position:absolute;bottom:-2px;left:10%;right:10%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.dealer-label{font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(201,168,76,.35);margin-bottom:5px}
 .dealer-seat-row{display:flex;justify-content:center}
 
-/* ── PLAYER ARC ──────────────────────────────────────── */
-.player-arc{
-  flex:1;min-height:0;overflow-y:auto;
-  padding:8px 6px 6px;
-  display:flex;flex-wrap:wrap;gap:6px;
-  align-content:flex-start;
-  justify-content:center;
-  position:relative;z-index:2;
-}
+/* ── PLAYER ARC ──────────────────────────────────────────── */
+.player-arc{flex:1;min-height:0;overflow-y:auto;padding:6px 4px 4px;
+  display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start;justify-content:center;
+  position:relative;z-index:2}
 
-/* ── SEAT CARD ───────────────────────────────────────── */
-.seat{
-  background:rgba(0,0,0,.38);border:1px solid rgba(201,168,76,.14);
-  border-radius:10px;padding:7px 10px;
+/* ── TABLE SPOT (the actual casino-style seat layout) ─────── */
+.table-spot{
+  background:rgba(0,0,0,.32);border:1px solid rgba(201,168,76,.14);
+  border-radius:10px;padding:7px 9px;
+  min-width:200px;max-width:320px;flex:1;
   transition:border-color .3s,box-shadow .3s;
-  min-width:220px;max-width:340px;flex:1;
+  display:flex;flex-direction:column;gap:4px;
 }
-.seat.is-me{border-color:rgba(41,128,185,.5);background:rgba(15,35,70,.28)}
-.seat.is-banker{border-color:rgba(201,168,76,.5);background:rgba(35,25,0,.38);
-  box-shadow:0 0 12px rgba(201,168,76,.15)}
-.seat.folded{opacity:.4}
-.seat.winner{border-color:#27ae60;box-shadow:0 0 12px rgba(39,174,96,.3);
-  animation:win-pulse 1s ease 2}
-.seat.loser{border-color:#c0392b}
-.seat.push-res{border-color:#888}
-@keyframes win-pulse{
-  0%,100%{box-shadow:0 0 12px rgba(39,174,96,.3)}
-  50%{box-shadow:0 0 28px rgba(39,174,96,.7)}
-}
+.table-spot.is-me{border-color:rgba(41,128,185,.5);background:rgba(15,35,70,.28)}
+.table-spot.is-banker{border-color:rgba(201,168,76,.5);background:rgba(35,25,0,.38);
+  box-shadow:0 0 14px rgba(201,168,76,.15)}
+.table-spot.folded{opacity:.4}
+.table-spot.winner{border-color:#27ae60;box-shadow:0 0 14px rgba(39,174,96,.35);animation:win-pulse 1s ease 2}
+.table-spot.loser{border-color:#c0392b}
+.table-spot.push-res{border-color:#888}
+.table-spot.being-revealed{animation:card-reveal .5s ease}
+@keyframes win-pulse{0%,100%{box-shadow:0 0 12px rgba(39,174,96,.3)}50%{box-shadow:0 0 28px rgba(39,174,96,.7)}}
+@keyframes card-reveal{0%{transform:scale(.96);opacity:.5}100%{transform:scale(1);opacity:1}}
 
-/* Flip animation for reveal */
-.seat.being-revealed{animation:card-flip .5s ease}
-@keyframes card-flip{
-  0%{transform:rotateY(90deg);opacity:0}
-  100%{transform:rotateY(0deg);opacity:1}
-}
-
-.seat-header{display:flex;align-items:center;gap:5px;margin-bottom:5px;flex-wrap:wrap}
-.seat-name{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);flex:1;
+/* Spot header */
+.spot-header{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.spot-name{font-family:'Cinzel',serif;font-size:11px;color:var(--gold);flex:1;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .banker-chip{background:linear-gradient(180deg,#d4a017,#8a6010);color:#fff;
   font-family:'Cinzel',serif;font-size:8px;padding:2px 6px;border-radius:10px;
-  border:1px solid var(--gold-l);white-space:nowrap;letter-spacing:.5px}
-.chips-display{font-size:11px;white-space:nowrap}
-.chips-display .amount{color:var(--gold-l);font-weight:600}
-.buyin-btn{font-family:'Cinzel',serif;font-size:9px;padding:2px 7px;
+  border:1px solid var(--gold-l);letter-spacing:.5px}
+.chips-disp{font-size:10px;white-space:nowrap}
+.chips-disp .amt{color:var(--gold-l);font-weight:600}
+.buyin-btn{font-family:'Cinzel',serif;font-size:9px;padding:2px 6px;
   border:1px solid rgba(201,168,76,.3);background:rgba(0,0,0,.3);
   color:rgba(201,168,76,.7);border-radius:3px;cursor:pointer;transition:all .15s}
 .buyin-btn:hover{border-color:var(--gold);color:var(--gold)}
 
 /* Result tags */
-.rtag{font-family:'Cinzel',serif;font-size:10px;padding:2px 7px;border-radius:3px;letter-spacing:.5px;white-space:nowrap}
+.rtag{font-family:'Cinzel',serif;font-size:9px;padding:2px 6px;border-radius:3px;letter-spacing:.5px;white-space:nowrap}
 .rtag-win{background:rgba(39,174,96,.2);border:1px solid #27ae60;color:#5dde8a}
 .rtag-lose{background:rgba(192,57,43,.2);border:1px solid #c0392b;color:#f08080}
 .rtag-push{background:rgba(128,128,128,.2);border:1px solid #888;color:#bbb}
 .rtag-acepush{background:rgba(201,168,76,.15);border:1px solid var(--gold-d);color:var(--gold)}
 .rtag-fold{background:rgba(80,80,80,.1);border:1px solid #555;color:#888}
-.net-chip{font-family:'Cinzel',serif;font-size:11px;font-weight:700}
+.net-chip{font-family:'Cinzel',serif;font-size:10px;font-weight:700}
 .nc-pos{color:#5dde8a}.nc-neg{color:#f08080}.nc-zero{color:#888}
-.not-playing{font-size:11px;color:rgba(245,237,216,.3);font-style:italic}
-.set-status{font-size:11px;color:#5dde8a;font-style:italic}
 
-/* ── BETTING UI ──────────────────────────────────────── */
-.bet-area{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-.bet-display{font-family:'Cinzel',serif;font-size:11px;min-width:48px}
-.bet-display .val{color:#f0d080;font-weight:600}
+/* ── BET CIRCLES ROW ─────────────────────────────────────── */
+.bet-circles-row{display:flex;gap:6px;align-items:center}
+.bet-circle-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
+.bet-circle-lbl{font-family:'Cinzel',serif;font-size:7px;letter-spacing:1px;text-transform:uppercase;
+  color:rgba(245,237,216,.3)}
+.bet-circle{position:relative;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .3s}
+/* Main bet circle */
+.bet-circle-main{width:44px;height:44px;
+  border:2px dashed rgba(201,168,76,.25);background:rgba(0,0,0,.2)}
+.bet-circle-main.has-bet{
+  border:2px solid rgba(201,168,76,.5);
+  background:radial-gradient(circle at 40% 35%,rgba(201,168,76,.15),rgba(0,0,0,.3));
+  box-shadow:0 0 8px rgba(201,168,76,.2)}
+/* Bonus bet circle */
+.bet-circle-bonus{width:32px;height:32px;
+  border:2px dashed rgba(160,80,200,.2);background:rgba(0,0,0,.2)}
+.bet-circle-bonus.has-bet{
+  border:2px solid rgba(160,80,200,.5);
+  background:radial-gradient(circle at 40% 35%,rgba(160,80,200,.15),rgba(0,0,0,.3));
+  box-shadow:0 0 8px rgba(160,80,200,.25)}
+/* Chip graphic inside circle */
+.circle-chip{position:absolute;width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-weight:700;
+  border:2px solid rgba(255,255,255,.25);
+  box-shadow:0 2px 5px rgba(0,0,0,.6);
+  animation:chip-drop .25s ease;pointer-events:none}
+.circle-chip::before{content:'';position:absolute;inset:3px;border-radius:50%;
+  border:1px dashed rgba(255,255,255,.3)}
+@keyframes chip-drop{0%{transform:translateY(-8px) scale(.7);opacity:0}100%{transform:none;opacity:1}}
+.circle-chip-main{background:radial-gradient(circle at 35% 35%,#4090e0,#1040a0)}
+.circle-chip-main.hi{background:radial-gradient(circle at 35% 35%,#303030,#080808)}
+.circle-chip-main.vhi{background:radial-gradient(circle at 35% 35%,#6040d0,#2010a0)}
+.circle-chip-bonus{width:22px;height:22px;font-size:6px;
+  background:radial-gradient(circle at 35% 35%,#c060e0,#6010a0)}
+.circle-chip-amount{font-size:7px;color:#fff;z-index:1;text-shadow:0 1px 2px rgba(0,0,0,.9)}
+.circle-chip-bonus .circle-chip-amount{font-size:6px}
+
+/* ── CARD ZONES ──────────────────────────────────────────── */
+.card-zones{display:flex;gap:5px;align-items:flex-start;flex-wrap:wrap}
+.card-zone{display:flex;flex-direction:column;gap:2px}
+.card-zone-lbl{font-family:'Cinzel',serif;font-size:7px;letter-spacing:1px;text-transform:uppercase;
+  color:rgba(245,237,216,.25)}
+.card-zone-slots{display:flex;gap:2px}
+/* Empty placeholder slot */
+.card-slot{width:22px;height:32px;border-radius:3px;
+  border:1px dashed rgba(201,168,76,.18);background:rgba(0,0,0,.15);flex-shrink:0}
+.card-slot.bonus-slot{border-color:rgba(160,80,200,.18)}
+
+/* ── PLAYING CARDS ───────────────────────────────────────── */
+.card{width:22px;height:32px;border-radius:3px;background:#fff;
+  border:1px solid rgba(0,0,0,.2);box-shadow:0 1px 3px rgba(0,0,0,.5);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-weight:700;user-select:none;font-family:'EB Garamond',serif;flex-shrink:0;
+  transition:transform .15s}
+.card.clickable{cursor:pointer}
+.card.clickable:hover{transform:translateY(-3px);box-shadow:0 4px 10px rgba(0,0,0,.6)}
+.card.red{color:#c0392b}.card.black{color:#111}
+.card.back{background:linear-gradient(135deg,#0d2a8a,#1a4ab0);border-color:rgba(255,255,255,.1)}
+.card.back::after{content:'🂠';font-size:13px;color:rgba(255,255,255,.2)}
+.card.joker{background:linear-gradient(135deg,#2a1a6a,#4a2a9a);color:#f0d080;border-color:rgba(201,168,76,.4)}
+.card-rank{font-size:8px;line-height:1;letter-spacing:-.5px}
+.card-suit{font-size:7px;line-height:1}
+/* Larger cards for setter overlay */
+.card-lg{width:36px;height:52px;border-radius:4px}
+.card-lg .card-rank{font-size:12px}
+.card-lg .card-suit{font-size:10px}
+.hand-rank-badge{font-family:'Cinzel',serif;font-size:8px;color:var(--gold-l);
+  white-space:nowrap;margin-top:1px}
+
+/* Deal animation */
+@keyframes deal-in{
+  0%{transform:translateY(-30px) scale(.6) rotate(-15deg);opacity:0}
+  60%{transform:translateY(3px) scale(1.05) rotate(2deg);opacity:1}
+  100%{transform:none;opacity:1}
+}
+.card.dealing{animation:deal-in .4s cubic-bezier(.22,.61,.36,1) both}
+
+/* ── BETTING UI (own seat) ───────────────────────────────── */
+.bet-ui{display:flex;flex-direction:column;gap:4px;width:100%}
+.bet-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.bet-lbl{font-family:'Cinzel',serif;font-size:10px;min-width:40px}
+.bet-lbl .val{color:#f0d080;font-weight:600}
 .chip-stack{display:flex;gap:3px;align-items:center}
-.chip{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+.chip{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-family:'Cinzel',serif;font-size:7px;font-weight:700;cursor:pointer;
   border:2px solid rgba(255,255,255,.2);box-shadow:0 2px 4px rgba(0,0,0,.5);
   transition:transform .15s;user-select:none;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);position:relative}
@@ -244,52 +303,35 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
 .chip-25{background:radial-gradient(circle at 35% 35%,#4090e0,#1040a0)}
 .chip-100{background:radial-gradient(circle at 35% 35%,#303030,#080808)}
 .chip-500{background:radial-gradient(circle at 35% 35%,#6040d0,#2010a0)}
-.clear-btn{font-size:9px;padding:3px 6px;background:rgba(0,0,0,.3);
+.clear-btn{font-size:9px;padding:2px 6px;background:rgba(0,0,0,.3);
   border:1px solid rgba(192,57,43,.4);color:#f08080;border-radius:3px;
   cursor:pointer;font-family:'Cinzel',serif;transition:all .15s}
 .clear-btn:hover{background:rgba(192,57,43,.2);border-color:#c0392b}
-.bonus-area{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:4px 8px;
-  background:rgba(160,80,200,.08);border:1px solid rgba(160,80,200,.22);border-radius:5px;margin-top:4px}
-.bonus-lbl{font-family:'Cinzel',serif;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#c080f0}
-.bonus-disp{font-family:'Cinzel',serif;font-size:11px}
-.bonus-disp .val{color:#e0a8ff;font-weight:600}
-.brtag{font-family:'Cinzel',serif;font-size:10px;padding:2px 7px;border-radius:3px}
+.bonus-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:3px 7px;
+  background:rgba(160,80,200,.08);border:1px solid rgba(160,80,200,.22);border-radius:4px}
+.bonus-row-lbl{font-family:'Cinzel',serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:#c080f0}
+.brtag{font-family:'Cinzel',serif;font-size:9px;padding:2px 6px;border-radius:3px}
 .brtag-win{background:rgba(39,174,96,.15);border:1px solid #27ae60;color:#80f0a0}
 .brtag-lose{background:rgba(80,80,80,.1);border:1px solid #555;color:#888}
 
-/* ── PLAYING CARDS ───────────────────────────────────── */
-.card{width:32px;height:46px;border-radius:4px;background:#fff;
-  border:1px solid rgba(0,0,0,.2);box-shadow:0 2px 4px rgba(0,0,0,.5);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  font-weight:700;user-select:none;font-family:'EB Garamond',serif;flex-shrink:0}
-.card.clickable{cursor:pointer;transition:transform .12s,box-shadow .12s}
-.card.clickable:hover{transform:translateY(-4px);box-shadow:0 6px 14px rgba(0,0,0,.6)}
-.card.red{color:#c0392b}.card.black{color:#111}
-.card.back{background:linear-gradient(135deg,#0d2a8a,#1a4ab0);border-color:rgba(255,255,255,.1)}
-.card.back::after{content:'🂠';font-size:18px;color:rgba(255,255,255,.2)}
-.card.joker{background:linear-gradient(135deg,#2a1a6a,#4a2a9a);color:#f0d080;border-color:rgba(201,168,76,.4)}
-.card-rank{font-size:11px;line-height:1}.card-suit{font-size:9px;line-height:1}
-.card-sm .card-rank{font-size:10px}.card-sm .card-suit{font-size:8px}
-.card-sm{width:27px;height:39px}
-.hand-lbl{font-family:'Cinzel',serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;
-  color:rgba(245,237,216,.3);margin-bottom:2px}
-.hand-grp{display:flex;flex-direction:column}
-.card-row{display:flex;gap:2px}
-.cards-area{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start}
+/* ── NOT PLAYING / STATUS ────────────────────────────────── */
+.not-playing{font-size:10px;color:rgba(245,237,216,.3);font-style:italic}
+.set-status{font-size:10px;color:#5dde8a;font-style:italic}
 
-/* Hidden / waiting for reveal */
-.reveal-pending{display:flex;align-items:center;gap:6px;font-size:11px;
-  color:rgba(245,237,216,.4);font-style:italic}
-.reveal-pending .card.back{opacity:.6}
-
-/* ── PHASE CONTROLS ──────────────────────────────────── */
+/* ── PHASE BAR ───────────────────────────────────────────── */
 .phase-bar{background:linear-gradient(180deg,#0d1a0a,#090f07);
-  border-top:1px solid var(--gold-d);padding:8px 14px;
+  border-top:1px solid var(--gold-d);padding:7px 12px;
   display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
-.phase-prompt{font-size:12px;color:rgba(245,237,216,.6);font-style:italic;flex:1;min-width:100px}
-#phase-buttons{display:flex;gap:7px;flex-wrap:wrap}
+.phase-prompt{font-size:11px;color:rgba(245,237,216,.6);font-style:italic;flex:1;min-width:100px}
+#phase-buttons{display:flex;gap:6px;flex-wrap:wrap}
 
-/* ── HAND SETTER ─────────────────────────────────────── */
+/* ── ACE PUSH BANNER ─────────────────────────────────────── */
+.ace-push-banner{background:rgba(201,168,76,.1);border-top:1px solid var(--gold-d);
+  border-bottom:1px solid var(--gold-d);padding:4px 12px;text-align:center;
+  font-family:'Cinzel',serif;font-size:10px;color:var(--gold);letter-spacing:1.5px;
+  flex-shrink:0;z-index:3}
+
+/* ── HAND SETTER ─────────────────────────────────────────── */
 #hand-setter{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:100;
   display:none;flex-direction:column;overflow-y:auto;padding:14px;
   -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
@@ -308,8 +350,7 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
 .setter-hand.active-target{border-color:#2980b9;box-shadow:0 0 10px rgba(41,128,185,.25)}
 .setter-hand-title{font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;
   text-transform:uppercase;color:var(--gold);margin-bottom:4px;text-align:center}
-.setter-hand-rule{font-size:10px;color:rgba(245,237,216,.32);text-align:center;
-  margin-bottom:6px;font-style:italic}
+.setter-hand-rule{font-size:10px;color:rgba(245,237,216,.32);text-align:center;margin-bottom:6px;font-style:italic}
 .setter-cards{display:flex;gap:3px;min-height:52px;align-items:center;flex-wrap:wrap}
 .hand-rank-disp{font-family:'Cinzel',serif;font-size:10px;color:var(--gold-l);
   text-align:center;margin-top:5px;min-height:14px}
@@ -317,14 +358,14 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
   border-radius:8px;padding:10px;margin-bottom:10px}
 .all-cards-title{font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;
   text-transform:uppercase;color:rgba(201,168,76,.5);margin-bottom:7px;text-align:center}
-.all-cards-grid{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.all-cards-grid{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
 .setter-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .hw-btn{background:rgba(0,0,0,.4);border:1px solid rgba(39,174,96,.4);color:#5dde8a;
   font-family:'Cinzel',serif;font-size:10px;padding:5px 12px;border-radius:3px;
   cursor:pointer;transition:all .15s}
 .hw-btn:hover{background:rgba(39,174,96,.15)}
 
-/* ── BUY-IN MODAL ────────────────────────────────────── */
+/* ── BUY-IN MODAL ────────────────────────────────────────── */
 #buyin-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:250;
   display:none;align-items:center;justify-content:center;
   -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
@@ -333,8 +374,7 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
   border-radius:8px;padding:22px;width:290px;max-width:90vw;box-shadow:var(--shadow)}
 .buyin-title{font-family:'Cinzel Decorative',serif;font-size:15px;color:var(--gold);
   text-align:center;margin-bottom:4px}
-.buyin-sub{font-size:12px;color:rgba(245,237,216,.4);text-align:center;
-  font-style:italic;margin-bottom:14px}
+.buyin-sub{font-size:12px;color:rgba(245,237,216,.4);text-align:center;font-style:italic;margin-bottom:14px}
 .buyin-presets{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
 .buyin-preset{padding:9px;background:rgba(0,0,0,.3);border:1px solid rgba(201,168,76,.2);
   border-radius:5px;text-align:center;cursor:pointer;font-family:'Cinzel',serif;
@@ -344,19 +384,14 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
 .buyin-custom-row input{flex:1;padding:7px 10px;font-size:14px}
 .buyin-actions{display:flex;gap:8px;justify-content:center}
 
-/* ── STATS PANEL ─────────────────────────────────────── */
+/* ── STATS PANEL ─────────────────────────────────────────── */
 #stats-panel{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:200;
   display:none;flex-direction:column;overflow-y:auto;padding:18px}
 #stats-panel.open{display:flex}
 .stats-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .stats-title{font-family:'Cinzel Decorative',serif;font-size:18px;color:var(--gold)}
-
-/* Best hand trophy block */
-.best-hand-block{
-  background:linear-gradient(135deg,rgba(201,168,76,.12),rgba(100,60,0,.18));
-  border:1px solid var(--gold-d);border-radius:8px;padding:14px 16px;margin-bottom:14px;
-  text-align:center;
-}
+.best-hand-block{background:linear-gradient(135deg,rgba(201,168,76,.12),rgba(100,60,0,.18));
+  border:1px solid var(--gold-d);border-radius:8px;padding:14px 16px;margin-bottom:14px;text-align:center}
 .best-hand-crown{font-size:28px;line-height:1;margin-bottom:4px}
 .best-hand-label{font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;
   text-transform:uppercase;color:rgba(201,168,76,.45);margin-bottom:6px}
@@ -366,7 +401,6 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
 .best-hand-who span{color:var(--gold);font-weight:600}
 .best-hand-round{font-size:11px;color:rgba(245,237,216,.4);font-style:italic;margin-top:2px}
 .best-hand-empty{font-size:12px;color:rgba(245,237,216,.3);font-style:italic}
-
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
 .stat-card{background:rgba(15,42,24,.6);border:1px solid rgba(201,168,76,.2);
   border-radius:8px;padding:12px;text-align:center}
@@ -383,26 +417,21 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
   letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
 .house-num-val{font-family:'Cinzel',serif;font-size:16px;font-weight:700}
 
-/* ── ACE-HIGH PUSH BANNER ────────────────────────────── */
-.ace-push-banner{
-  background:rgba(201,168,76,.1);border-top:1px solid var(--gold-d);border-bottom:1px solid var(--gold-d);
-  padding:5px 12px;text-align:center;font-family:'Cinzel',serif;font-size:11px;
-  color:var(--gold);letter-spacing:1.5px;flex-shrink:0;z-index:3;
-}
-
-/* ── TOAST ───────────────────────────────────────────── */
-#toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(20px);
+/* ── TOAST ───────────────────────────────────────────────── */
+#toast{position:fixed;bottom:65px;left:50%;transform:translateX(-50%) translateY(20px);
   background:rgba(0,0,0,.9);border:1px solid var(--gold-d);color:var(--cream);
   font-family:'Cinzel',serif;font-size:11px;padding:9px 18px;border-radius:20px;
   opacity:0;transition:all .3s;z-index:300;letter-spacing:.5px;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 @media(max-width:480px){
-  .chip{width:24px;height:24px;font-size:6px}
-  .card{width:28px;height:41px}
-  .card-sm{width:23px;height:34px}
+  .chip{width:22px;height:22px;font-size:6px}
+  .card{width:18px;height:27px}
+  .card-rank{font-size:7px}.card-suit{font-size:6px}
   .casino-table{border-radius:40% / 30%}
-  .dealer-booth{border-radius:40% 40% 0 0 / 50% 50% 0 0;padding:6px 8% 8px}
+  .dealer-booth{border-radius:40% 40% 0 0 / 50% 50% 0 0;padding:5px 5% 7px}
+  .deal-puck-inner{width:40px;height:40px}
+  .deal-puck-num{font-size:17px}
 }
 </style>
 </head>
@@ -477,21 +506,19 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
   </header>
 
   <div class="table-wrap">
-    <div class="casino-table">
+    <div class="casino-table" id="casino-table">
       <div class="felt-watermark">Pai Gow Poker</div>
+      <div id="deal-puck-container"></div>
 
-      <!-- Ace-high push banner -->
       <div class="ace-push-banner" id="ace-push-banner" style="display:none">
-        ♠ Banker holds Ace-High — All bets push ♠
+        ♠ Banker Ace-High — Main bets push · Bonus bets paid independently ♠
       </div>
 
-      <!-- Dealer booth at the top -->
       <div class="dealer-booth">
         <div class="dealer-label">Dealer · Banker</div>
         <div class="dealer-seat-row" id="banker-area"></div>
       </div>
 
-      <!-- Player seats arc -->
       <div class="player-arc" id="player-arc"></div>
     </div>
   </div>
@@ -501,23 +528,22 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
     <div id="phase-buttons"></div>
   </div>
 </div>
-
-</div><!-- #app -->
+</div>
 
 <!-- ── HAND SETTER ────────────────────────────────────────── -->
 <div id="hand-setter">
   <div class="setter-title" id="setter-title">Set Your Hand</div>
   <div class="setter-sub" id="setter-sub"></div>
-  <div class="setter-instr">Tap a card to assign it · High Hand fills first · Tap a placed card to return it</div>
-  <div class="target-ind" id="target-ind">▶ Filling: High Hand</div>
+  <div class="setter-instr">All 7 cards start in High Hand · Tap to move to Low Hand · Tap placed card to return</div>
+  <div class="target-ind" id="target-ind">▶ Move 2 cards to Low Hand</div>
   <div class="setter-hands">
-    <div class="setter-hand active-target" id="high-hand-box">
+    <div class="setter-hand" id="high-hand-box">
       <div class="setter-hand-title">🃏 High Hand (5 cards)</div>
-      <div class="setter-hand-rule">Must outrank Low Hand</div>
+      <div class="setter-hand-rule">Best 5-card hand</div>
       <div class="setter-cards" id="high-hand-cards"></div>
       <div class="hand-rank-disp" id="high-hand-rank"></div>
     </div>
-    <div class="setter-hand" id="low-hand-box">
+    <div class="setter-hand active-target" id="low-hand-box">
       <div class="setter-hand-title">🂡 Low Hand (2 cards)</div>
       <div class="setter-hand-rule">Best 2-card hand</div>
       <div class="setter-cards" id="low-hand-cards"></div>
@@ -525,8 +551,8 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
     </div>
   </div>
   <div class="all-cards-area">
-    <div class="all-cards-title">Your 7 Cards — Tap to Assign</div>
-    <div class="all-cards-grid" id="all-setter-cards"></div>
+    <div class="all-cards-title">Your Cards — Tap High Hand card to send to Low Hand · Tap Low Hand card to return</div>
+    <div class="all-cards-grid" id="all-setter-cards" style="display:none"></div>
   </div>
   <div class="setter-actions">
     <button class="hw-btn" onclick="requestHouseWay()">🏠 House Way</button>
@@ -576,12 +602,10 @@ let isHost = false;
 let gameState = null;
 let startingChips = 500;
 
-// Setter state
-let tempHigh = [], tempLow = [], tempUnassigned = [];
-let setterTarget = 'high';
+// Setter: all 7 start in high; player moves to low
+let tempHigh = [], tempLow = [];
 
 socket.on('connect', () => { myId = socket.id; });
-
 socket.on('roomCreated', ({ code }) => {
   roomCode = code; isHost = true;
   document.getElementById('display-code').textContent = code;
@@ -596,16 +620,13 @@ socket.on('joinedRoom', ({ code }) => {
 });
 socket.on('error', msg => toast(msg));
 socket.on('playerLeft', ({ name }) => toast(`${name} disconnected`));
-
 socket.on('state', state => {
   gameState = state;
   if (state.phase === 'lobby') renderWaiting(state);
   else { showScreen('game-screen'); renderGame(state); }
 });
-
 socket.on('houseWaySuggestion', ({ high, low }) => {
-  tempHigh = high; tempLow = low; tempUnassigned = [];
-  setterTarget = 'high';
+  tempHigh = high; tempLow = low;
   renderSetter();
   toast('House Way applied — review and confirm');
 });
@@ -661,154 +682,325 @@ function renderWaiting(state) {
 }
 
 // ════════════════════════════════════════════════════════════
+//  DEAL ORDER HELPERS
+// ════════════════════════════════════════════════════════════
+// Returns an array of player indices in deal order, starting from dealOrderNum.
+// 1=banker, 2=right of banker, etc. up to 7 seats (0-indexed slots 0-6).
+function getDealOrder(state) {
+  const n = state.players.length; // actual players
+  const totalSlots = 7;
+  const startSlot = ((state.dealOrderNum || 1) - 1) % totalSlots; // 0-indexed slot
+  // Map slots to players: slot i → player index i % n
+  const order = [];
+  for (let s = 0; s < totalSlots; s++) {
+    const slotIdx = (startSlot + s) % totalSlots;
+    order.push(slotIdx % n);
+  }
+  return order; // may have duplicates if n < 7 — that's fine, shows all 7 slots
+}
+
+// Returns the deal seat number (1-7) for a given player index
+function getDealSeatNum(state, playerIdx) {
+  if (!state.dealOrderNum) return null;
+  const totalSlots = 7;
+  const n = state.players.length;
+  // seat 1 = dealOrderNum slot (0-indexed: dealOrderNum-1)
+  // which player index is slot k? → k % n
+  // We want: for playerIdx, which seat numbers map to them?
+  // Seat s (1-indexed) → slot (dealOrderNum - 1 + s - 1) % 7 → player slot%n
+  const startSlot = (state.dealOrderNum - 1) % totalSlots;
+  for (let s = 1; s <= totalSlots; s++) {
+    const slot = (startSlot + s - 1) % totalSlots;
+    if (slot % n === playerIdx) return s;
+  }
+  return null;
+}
+
+// ════════════════════════════════════════════════════════════
 //  CASINO TABLE RENDER
 // ════════════════════════════════════════════════════════════
 function renderGame(state) {
   const isDone = state.phase === 'done';
+
+  // Ace-high push banner
   document.getElementById('ace-push-banner').style.display =
     (isDone && state.bankerAceHighPush) ? 'block' : 'none';
 
-  const banker = state.players[state.bankerIdx];
-  document.getElementById('banker-area').innerHTML = renderSeat(banker, state.bankerIdx, state);
+  // Deal order puck
+  const puckContainer = document.getElementById('deal-puck-container');
+  if (state.dealOrderNum && state.phase !== 'bet') {
+    puckContainer.innerHTML = `
+      <div class="deal-puck">
+        <div class="deal-puck-inner">
+          <div class="deal-puck-num">${state.dealOrderNum}</div>
+          <div class="deal-puck-lbl">Deal</div>
+        </div>
+      </div>`;
+  } else {
+    puckContainer.innerHTML = '';
+  }
 
+  // Banker
+  const banker = state.players[state.bankerIdx];
+  document.getElementById('banker-area').innerHTML = renderSpot(banker, state.bankerIdx, state);
+
+  // Players
   const players = state.players.filter((_, i) => i !== state.bankerIdx);
   document.getElementById('player-arc').innerHTML =
-    players.map(p => renderSeat(p, state.players.indexOf(p), state)).join('');
+    players.map(p => renderSpot(p, state.players.indexOf(p), state)).join('');
 
   renderControls(state);
   updatePhaseBadge(state.phase);
 }
 
-function renderSeat(p, idx, state) {
-  const isMe = p.id === myId;
-  const isBanker = idx === state.bankerIdx;
-  const isDone = state.phase === 'done';
+// ── RENDER A SINGLE TABLE SPOT ────────────────────────────
+function renderSpot(p, idx, state) {
+  const isMe      = p.id === myId;
+  const isBanker  = idx === state.bankerIdx;
+  const isDone    = state.phase === 'done';
+  const hasCards  = p.hand && p.hand.length > 0;
+  const isActive  = isBanker || (!p.folded && p.bet > 0);
 
-  let cls = 'seat';
-  if (isMe)    cls += ' is-me';
+  let cls = 'table-spot';
+  if (isMe)     cls += ' is-me';
   if (isBanker) cls += ' is-banker';
   if (p.folded) cls += ' folded';
-  if (p.disconnected) cls += ' disconnected';
   if (isDone && p.result === 'win')  cls += ' winner';
   if (isDone && p.result === 'lose') cls += ' loser';
   if (isDone && p.result === 'push') cls += ' push-res';
-
-  // Add flip animation class for seats just revealed this update
   if (isDone && p.revealed && state.revealStep > 0) cls += ' being-revealed';
+
+  // Deal seat number badge
+  const seatNum = getDealSeatNum(state, idx);
+  const seatBadge = seatNum ? `<span style="font-family:'Cinzel',serif;font-size:8px;
+    padding:1px 5px;border-radius:8px;background:rgba(201,168,76,.12);
+    border:1px solid rgba(201,168,76,.25);color:rgba(201,168,76,.6);white-space:nowrap">#${seatNum}</span>` : '';
 
   // Result tags
   let rtHTML = '';
   if (isDone && p.result && !isBanker) {
-    const lbl = p.result === 'win' ? 'WIN' : p.result === 'lose' ? 'LOSE' : 'PUSH';
-    const rc  = p.result === 'win'  ? 'rtag-win'
-              : p.result === 'lose' ? 'rtag-lose'
-              : state.bankerAceHighPush ? 'rtag-acepush' : 'rtag-push';
-    const nc  = p.netChips > 0 ? 'nc-pos' : p.netChips < 0 ? 'nc-neg' : 'nc-zero';
-    const ns  = p.netChips > 0 ? `+${p.netChips}` : `${p.netChips}`;
+    const lbl = p.result==='win'?'WIN':p.result==='lose'?'LOSE':'PUSH';
+    const rc  = p.result==='win' ?'rtag-win':p.result==='lose'?'rtag-lose':
+                state.bankerAceHighPush?'rtag-acepush':'rtag-push';
+    const nc  = p.netChips>0?'nc-pos':p.netChips<0?'nc-neg':'nc-zero';
+    const ns  = p.netChips>0?`+${p.netChips}`:`${p.netChips}`;
     rtHTML = `<span class="rtag ${rc}">${lbl}</span><span class="net-chip ${nc}">${ns}</span>`;
   }
   if (isDone && p.folded) rtHTML = `<span class="rtag rtag-fold">FOLDED</span>`;
 
-  const buyinBtn = isMe && state.phase === 'bet' && !isBanker
+  const namePart = isMe ? `${esc(p.name)} <span class="me-badge">YOU</span>` : esc(p.name);
+  const buyinBtn = isMe && state.phase==='bet' && !isBanker
     ? `<button class="buyin-btn" onclick="openBuyIn()">+ Chips</button>` : '';
 
-  const namePart = isMe ? `${esc(p.name)} <span class="me-badge">YOU</span>` : esc(p.name);
+  // Bet circles
+  const betCirclesHTML = renderBetCircles(p, state, isMe, isBanker);
 
-  return `<div class="${cls}" id="seat-${p.id.replace(/[^a-z0-9]/gi,'_')}">
-    <div class="seat-header">
-      <div class="seat-name">${namePart}</div>
-      ${isBanker ? '<span class="banker-chip">BANKER</span>' : ''}
+  // Card zones
+  const cardZonesHTML = renderCardZones(p, state, isMe, isBanker);
+
+  // Inline bet UI for own seat during betting
+  const betUIHTML = (isMe && state.phase==='bet' && !isBanker && !p.folded)
+    ? renderBetUI(p) : '';
+
+  // Set button
+  const setBtn = (isMe && state.phase==='set' && hasCards && !p.handSet)
+    ? `<button class="btn btn-primary btn-sm" style="margin-top:3px" onclick="openSetter()">Set My Hand</button>` : '';
+
+  // Bonus result
+  const bonusResultHTML = (isDone && p.bonusBet > 0 && p.revealed && !isBanker)
+    ? `<div class="bonus-row" style="margin-top:3px">
+        <span class="bonus-row-lbl">🎰</span>
+        <span class="brtag ${p.bonusWon?'brtag-win':'brtag-lose'}">${p.bonusLabel||'—'}</span>
+        ${p.bonusNet!=null?`<span class="net-chip ${p.bonusNet>0?'nc-pos':'nc-neg'}" style="font-size:9px">${p.bonusNet>0?'+':''}${p.bonusNet}</span>`:''}
+      </div>` : '';
+
+  return `<div class="${cls}">
+    <div class="spot-header">
+      <div class="spot-name">${namePart}</div>
+      ${isBanker?'<span class="banker-chip">BANKER</span>':''}
+      ${seatBadge}
       ${rtHTML}
-      <div class="chips-display">💰 <span class="amount">${p.chips}</span></div>
+      <div class="chips-disp">💰 <span class="amt">${p.chips}</span></div>
       ${buyinBtn}
     </div>
-    <div class="seat-body">${renderBody(p, idx, state, isMe, isBanker)}</div>
+    ${betCirclesHTML}
+    ${cardZonesHTML}
+    ${betUIHTML}
+    ${setBtn}
+    ${bonusResultHTML}
+    ${(state.phase==='set'&&p.handSet&&!isMe)?'<div class="set-status" style="margin-top:2px">✓ Hand set</div>':''}
+    ${(isBanker&&state.phase==='bet')?'<div class="not-playing" style="margin-top:2px">Covering all bets</div>':''}
+    ${(p.folded&&state.phase!=='done')?'<div class="not-playing" style="margin-top:2px">Folded this round</div>':''}
   </div>`;
 }
 
-function renderBody(p, idx, state, isMe, isBanker) {
-  const isDone = state.phase === 'done';
+// ── BET CIRCLES ──────────────────────────────────────────
+function renderBetCircles(p, state, isMe, isBanker) {
+  if (isBanker) return '';
+  const hasBet  = p.bet > 0;
+  const hasBonus = p.bonusBet > 0;
 
-  if (state.phase === 'bet') {
-    if (isBanker) return `<span class="not-playing">Banker — covering all bets</span>`;
-    if (p.folded) return `<span class="not-playing">Folded</span>`;
-    if (isMe)     return renderBetUI(p);
-    return `<span class="not-playing">${p.bet > 0 ? `Bet: ${p.bet}${p.bonusBet>0?` + bonus ${p.bonusBet}`:''}` : 'No bet yet'}</span>`;
+  // Chip color by amount
+  function chipClass(amt) {
+    if (amt >= 500) return 'circle-chip-main vhi';
+    if (amt >= 100) return 'circle-chip-main hi';
+    return 'circle-chip-main';
   }
-  if (state.phase === 'set') {
-    if (p.folded || (p.bet === 0 && !isBanker)) return `<span class="not-playing">Not playing</span>`;
-    if (p.handSet)  return `<span class="set-status">✓ Hand set</span>`;
-    if (isMe)       return `<button class="btn btn-primary btn-sm" onclick="openSetter()">Set My Hand</button>`;
-    return `<span class="not-playing">Setting hand…</span>`;
+
+  const mainChip = hasBet
+    ? `<div class="circle-chip ${chipClass(p.bet)}"><span class="circle-chip-amount">${fmtChip(p.bet)}</span></div>` : '';
+  const bonusChip = hasBonus
+    ? `<div class="circle-chip circle-chip-bonus"><span class="circle-chip-amount">${fmtChip(p.bonusBet)}</span></div>` : '';
+
+  return `<div class="bet-circles-row">
+    <div class="bet-circle-wrap">
+      <div class="bet-circle bet-circle-main ${hasBet?'has-bet':''}">${mainChip}</div>
+      <div class="bet-circle-lbl">Main Bet</div>
+    </div>
+    <div class="bet-circle-wrap">
+      <div class="bet-circle bet-circle-bonus ${hasBonus?'has-bet':''}">${bonusChip}</div>
+      <div class="bet-circle-lbl">Bonus</div>
+    </div>
+  </div>`;
+}
+
+// ── CARD ZONES ────────────────────────────────────────────
+function renderCardZones(p, state, isMe, isBanker) {
+  const phase   = state.phase;
+  const isDone  = state.phase === 'done';
+  const hasCards = p.hand && p.hand.length > 0;
+
+  // Empty slots shown when no cards dealt yet
+  if (!hasCards) {
+    return `<div class="card-zones">
+      <div class="card-zone">
+        <div class="card-zone-lbl">High Hand</div>
+        <div class="card-zone-slots">${Array(5).fill('<div class="card-slot"></div>').join('')}</div>
+      </div>
+      <div class="card-zone">
+        <div class="card-zone-lbl">Low Hand</div>
+        <div class="card-zone-slots">${Array(2).fill('<div class="card-slot bonus-slot"></div>').join('')}</div>
+      </div>
+    </div>`;
   }
+
+  // During set phase: show cards in zones
+  if (phase === 'set') {
+    // Banker: always fully visible. Others: own cards visible, others see backs.
+    const showFaces = isMe || isBanker;
+
+    // All 7 cards go in high hand zone until player sets them
+    // If hand is set, show split
+    const highCards = p.highHand.length > 0 ? p.highHand : p.hand;
+    const lowCards  = p.lowHand.length > 0 ? p.lowHand : [];
+    const highCount = p.highHand.length > 0 ? 5 : 7;
+    const lowCount  = p.lowHand.length > 0 ? 2 : 0;
+
+    // Placeholders for empty slots
+    const highSlots = highCount < 5 ? Array(5 - highCount).fill('<div class="card-slot"></div>').join('') : '';
+    const lowSlots  = lowCount  < 2 ? Array(2 - lowCount).fill('<div class="card-slot bonus-slot"></div>').join('') : '';
+
+    const highLabel = p.handSet ? `High (${evalFiveClient(p.highHand)})` : 'High Hand';
+    const lowLabel  = p.handSet && p.lowHand.length===2 ? `Low (${evalTwoClient(p.lowHand)})` : 'Low Hand';
+
+    const dealClass = phase === 'set' ? ' dealing' : '';
+
+    return `<div class="card-zones">
+      <div class="card-zone">
+        <div class="card-zone-lbl">${highLabel}</div>
+        <div class="card-zone-slots">
+          ${highCards.map(c => cHTML(c, showFaces, dealClass)).join('')}
+          ${highSlots}
+        </div>
+      </div>
+      ${lowCards.length > 0 ? `<div class="card-zone">
+        <div class="card-zone-lbl">${lowLabel}</div>
+        <div class="card-zone-slots">
+          ${lowCards.map(c => cHTML(c, showFaces, '')).join('')}
+          ${lowSlots}
+        </div>
+      </div>` : `<div class="card-zone">
+        <div class="card-zone-lbl">Low Hand</div>
+        <div class="card-zone-slots">${Array(2).fill('<div class="card-slot bonus-slot"></div>').join('')}</div>
+      </div>`}
+    </div>`;
+  }
+
+  // Done phase
   if (isDone) {
-    if (p.folded || (p.bet === 0 && !isBanker)) return `<span class="not-playing">Not playing</span>`;
+    if (p.folded || (p.bet === 0 && !isBanker)) {
+      return `<div class="card-zones"><div class="not-playing">Not playing this round</div></div>`;
+    }
     if (!p.revealed) {
-      // Cards not yet flipped for this player
-      return `<div class="reveal-pending">
-        ${[1,2,3,4,5].map(()=>`<div class="card back card-sm"></div>`).join('')}
-        <span style="font-size:10px;color:rgba(245,237,216,.3);font-style:italic;margin-left:4px;">awaiting reveal…</span>
+      return `<div class="card-zones">
+        <div class="card-zone">
+          <div class="card-zone-lbl">High Hand</div>
+          <div class="card-zone-slots">${Array(5).fill('<div class="card back" style="width:22px;height:32px"></div>').join('')}</div>
+        </div>
+        <div class="card-zone">
+          <div class="card-zone-lbl">Low Hand</div>
+          <div class="card-zone-slots">${Array(2).fill('<div class="card back" style="width:22px;height:32px"></div>').join('')}</div>
+        </div>
       </div>`;
     }
-    return renderRevealCards(p, isBanker, state);
+    // Revealed
+    const hn = evalFiveClient(p.highHand);
+    const ln = evalTwoClient(p.lowHand);
+    return `<div class="card-zones">
+      <div class="card-zone">
+        <div class="card-zone-lbl">High (${hn})</div>
+        <div class="card-zone-slots">${p.highHand.map(c=>cHTML(c,true,'')).join('')}</div>
+      </div>
+      <div class="card-zone">
+        <div class="card-zone-lbl">Low (${ln})</div>
+        <div class="card-zone-slots">${p.lowHand.map(c=>cHTML(c,true,'')).join('')}</div>
+      </div>
+    </div>`;
   }
+
   return '';
 }
 
+// ── CARD HTML ─────────────────────────────────────────────
+function cHTML(card, showFace, extraCls='') {
+  if (!card || card.hidden || !showFace)
+    return `<div class="card back${extraCls}"></div>`;
+  if (card.isJoker)
+    return `<div class="card joker${extraCls}"><div class="card-rank">★</div><div class="card-suit" style="font-size:6px">JKR</div></div>`;
+  const col = (card.suit==='♥'||card.suit==='♦') ? 'red' : 'black';
+  return `<div class="card ${col}${extraCls}"><div class="card-rank">${card.rank}</div><div class="card-suit">${card.suit}</div></div>`;
+}
+
+// ── CHIP AMOUNT FORMATTER ─────────────────────────────────
+function fmtChip(n) {
+  if (n >= 1000) return (n/1000).toFixed(n%1000===0?0:1)+'k';
+  return String(n);
+}
+
+// ── BET UI (own seat, bet phase) ──────────────────────────
 function renderBetUI(p) {
   const avail  = p.chips - p.bonusBet;
   const availB = p.chips - p.bet - p.bonusBet;
-  const chips = (max, fn, sm) => [1,5,25,100,500].filter(v => max >= v).map(v =>
-    `<div class="chip chip-${v}"${sm?' style="width:22px;height:22px;font-size:6px"':''} onclick="${fn}(${v})">${v}</div>`).join('');
-  return `<div style="display:flex;flex-direction:column;gap:4px;width:100%">
-    <div class="bet-area">
-      <div class="bet-display">Bet: <span class="val">${p.bet}</span></div>
-      <div class="chip-stack">${chips(avail,'placeBet',false)}</div>
-      ${p.bet>0?`<button class="clear-btn" onclick="clearBet()">Clear</button>`:''}
-      <button class="btn btn-sm" onclick="doFold()">${p.folded?'Unfold':'Fold'}</button>
+  const chipBtns = (max, fn) => [1,5,25,100,500].filter(v => max >= v).map(v =>
+    `<div class="chip chip-${v}" onclick="${fn}(${v})">${v}</div>`).join('');
+  return `<div class="bet-ui">
+    <div class="bet-row">
+      <div class="bet-lbl">Bet: <span class="val">${p.bet}</span></div>
+      <div class="chip-stack">${chipBtns(avail,'placeBet')}</div>
+      ${p.bet>0?`<button class="clear-btn" onclick="clearBet()">✕</button>`:''}
+      <button class="btn btn-sm" onclick="doFold()" style="margin-left:2px">${p.folded?'Unfold':'Fold'}</button>
     </div>
-    <div class="bonus-area">
-      <span class="bonus-lbl">🎰 Bonus</span>
-      <div class="bonus-disp">Bet: <span class="val">${p.bonusBet}</span></div>
-      <div class="chip-stack">${chips(availB,'placeBonusBet',true)}</div>
-      ${p.bonusBet>0?`<button class="clear-btn" onclick="clearBonusBet()">Clear</button>`:''}
+    <div class="bonus-row">
+      <span class="bonus-row-lbl">🎰 Bonus</span>
+      <div class="bet-lbl" style="min-width:36px"><span class="val" style="color:#e0a8ff">${p.bonusBet}</span></div>
+      <div class="chip-stack">${chipBtns(availB,'placeBonusBet')}</div>
+      ${p.bonusBet>0?`<button class="clear-btn" onclick="clearBonusBet()">✕</button>`:''}
     </div>
   </div>`;
-}
-
-function renderRevealCards(p, isBanker, state) {
-  const hn = evalFiveClient(p.highHand);
-  const ln = evalTwoClient(p.lowHand);
-  const bonusHTML = p.bonusBet > 0 ? `
-    <div class="bonus-area" style="margin-top:4px;padding:3px 7px">
-      <span class="bonus-lbl">🎰</span>
-      <span class="brtag ${p.bonusWon?'brtag-win':'brtag-lose'}">${p.bonusLabel}</span>
-      ${p.bonusNet!=null?`<span class="net-chip ${p.bonusNet>0?'nc-pos':'nc-neg'}">${p.bonusNet>0?'+':''}${p.bonusNet}</span>`:''}
-    </div>` : '';
-  return `<div style="width:100%">
-    <div class="cards-area">
-      <div class="hand-grp">
-        <div class="hand-lbl">High (${hn})</div>
-        <div class="card-row">${p.highHand.map(c=>cHTML(c,true)).join('')}</div>
-      </div>
-      <div class="hand-grp">
-        <div class="hand-lbl">Low (${ln})</div>
-        <div class="card-row">${p.lowHand.map(c=>cHTML(c,true)).join('')}</div>
-      </div>
-    </div>${bonusHTML}
-  </div>`;
-}
-
-function cHTML(card, small=false) {
-  const s = small ? ' card-sm' : '';
-  if (!card || card.hidden) return `<div class="card${s} back"></div>`;
-  if (card.isJoker) return `<div class="card${s} joker"><div class="card-rank">★</div><div class="card-suit" style="font-size:7px">JKR</div></div>`;
-  const col = (card.suit==='♥'||card.suit==='♦') ? 'red' : 'black';
-  return `<div class="card${s} ${col}"><div class="card-rank">${card.rank}</div><div class="card-suit">${card.suit}</div></div>`;
 }
 
 // ════════════════════════════════════════════════════════════
-//  PHASE CONTROLS + SEQUENTIAL REVEAL
+//  PHASE CONTROLS
 // ════════════════════════════════════════════════════════════
 function renderControls(state) {
   const prompt = document.getElementById('phase-prompt');
@@ -817,72 +1009,69 @@ function renderControls(state) {
   const myPlayer = state.players.find(p => p.id === myId);
 
   if (state.phase === 'bet') {
-    prompt.textContent = 'Place your bets. Host deals when everyone is ready.';
+    prompt.textContent = 'Place bets in the circles. Host deals when everyone is ready.';
     if (isHost) {
-      addBtn(btns, '🔄 Rotate Banker', 'btn', () => socket.emit('rotateBanker', { code: roomCode }));
-      addBtn(btns, 'Deal Cards', 'btn btn-primary', () => socket.emit('deal', { code: roomCode }));
+      addBtn(btns,'🔄 Rotate Banker','btn',()=>socket.emit('rotateBanker',{code:roomCode}));
+      addBtn(btns,'Deal Cards','btn btn-primary',()=>socket.emit('deal',{code:roomCode}));
     }
   } else if (state.phase === 'set') {
-    const active = state.players.filter((p,i) => i===state.bankerIdx ? p.hand.length>0 : !p.folded&&p.bet>0);
-    const ready  = active.filter(p => p.handSet).length;
-    prompt.textContent = `Setting hands… ${ready} / ${active.length} ready`;
-    if (myPlayer && myPlayer.hand.length > 0 && !myPlayer.handSet)
-      addBtn(btns, 'Set My Hand', 'btn btn-primary', openSetter);
+    const active = state.players.filter((p,i)=>i===state.bankerIdx?p.hand.length>0:!p.folded&&p.bet>0);
+    const ready  = active.filter(p=>p.handSet).length;
+    prompt.textContent = `Setting hands… ${ready}/${active.length} ready · Banker's cards visible to all`;
+    if (myPlayer && myPlayer.hand.length>0 && !myPlayer.handSet)
+      addBtn(btns,'Set My Hand','btn btn-primary',openSetter);
     if (isHost)
-      addBtn(btns, 'Force Reveal', 'btn btn-danger', () => socket.emit('reveal', { code: roomCode }));
+      addBtn(btns,'Force Reveal','btn btn-danger',()=>socket.emit('reveal',{code:roomCode}));
   } else if (state.phase === 'done') {
-    // Calculate how many active non-banker players there are
-    const activePlayers = state.players.filter((p,i) => i!==state.bankerIdx && p.hand.length>0 && !p.folded);
-    const allRevealed   = activePlayers.every(p => p.revealed);
-
+    const activePlayers = state.players.filter((p,i)=>i!==state.bankerIdx&&p.hand.length>0&&!p.folded);
+    const allRevealed   = activePlayers.every(p=>p.revealed);
     if (!allRevealed) {
-      // Still flipping players — show "Flip Next Player" button for host
-      const nextUnrevealed = activePlayers.find(p => !p.revealed);
-      const nextName = nextUnrevealed ? nextUnrevealed.name : '';
-      prompt.textContent = `Banker revealed — flip each player's cards`;
-      if (isHost) {
-        addBtn(btns, `▶ Reveal ${nextName}`, 'btn btn-reveal', () => socket.emit('advanceReveal', { code: roomCode }));
-      }
+      const nextUnrevealed = activePlayers.find(p=>!p.revealed);
+      prompt.textContent = `Banker revealed · Flip each player's cards`;
+      if (isHost)
+        addBtn(btns,`▶ Reveal ${nextUnrevealed?nextUnrevealed.name:''}`,
+          'btn btn-reveal',()=>socket.emit('advanceReveal',{code:roomCode}));
     } else {
       prompt.textContent = 'Round complete!';
       if (isHost)
-        addBtn(btns, 'Next Round', 'btn btn-primary', () => socket.emit('nextRound', { code: roomCode }));
+        addBtn(btns,'Next Round','btn btn-primary',()=>socket.emit('nextRound',{code:roomCode}));
     }
   }
 }
 
 function addBtn(c, lbl, cls, fn) {
   const b = document.createElement('button');
-  b.className = cls; b.textContent = lbl; b.onclick = fn; c.appendChild(b);
+  b.className=cls; b.textContent=lbl; b.onclick=fn; c.appendChild(b);
 }
 function updatePhaseBadge(phase) {
   const el  = document.getElementById('phase-badge');
-  const map = { bet:'Betting', set:'Setting Hands', done:'Showdown', lobby:'Lobby' };
-  const cls = { bet:'phase-bet', set:'phase-set', done:'phase-done', lobby:'phase-lobby' };
-  el.textContent = map[phase] || phase;
+  const map = {bet:'Betting',set:'Setting Hands',done:'Showdown',lobby:'Lobby'};
+  const cls = {bet:'phase-bet',set:'phase-set',done:'phase-done',lobby:'phase-lobby'};
+  el.textContent = map[phase]||phase;
   el.className   = `phase-badge ${cls[phase]||'phase-lobby'}`;
 }
 
 // ════════════════════════════════════════════════════════════
 //  BET ACTIONS
 // ════════════════════════════════════════════════════════════
-function placeBet(a)      { socket.emit('placeBet',      { code:roomCode, amount:a }); }
-function clearBet()       { socket.emit('clearBet',      { code:roomCode }); }
-function placeBonusBet(a) { socket.emit('placeBonusBet', { code:roomCode, amount:a }); }
-function clearBonusBet()  { socket.emit('clearBonusBet', { code:roomCode }); }
+function placeBet(a)      { socket.emit('placeBet',      {code:roomCode,amount:a}); }
+function clearBet()       { socket.emit('clearBet',      {code:roomCode}); }
+function placeBonusBet(a) { socket.emit('placeBonusBet', {code:roomCode,amount:a}); }
+function clearBonusBet()  { socket.emit('clearBonusBet', {code:roomCode}); }
 function doFold() {
-  const me = gameState.players.find(p => p.id === myId);
-  socket.emit(me && me.folded ? 'unfold' : 'fold', { code:roomCode });
+  const me = gameState.players.find(p=>p.id===myId);
+  socket.emit(me&&me.folded?'unfold':'fold',{code:roomCode});
 }
 
 // ════════════════════════════════════════════════════════════
-//  HAND SETTER
+//  HAND SETTER  — all 7 start in high; player moves 2 to low
 // ════════════════════════════════════════════════════════════
 function openSetter() {
-  const me = gameState.players.find(p => p.id === myId);
-  if (!me || me.hand.length === 0) return;
-  tempHigh=[]; tempLow=[]; tempUnassigned=[...me.hand];
-  setterTarget = 'high';
+  const me = gameState.players.find(p=>p.id===myId);
+  if (!me||me.hand.length===0) return;
+  // Start with all 7 in high
+  tempHigh = [...me.hand];
+  tempLow  = [];
   document.getElementById('setter-title').textContent = `${me.name}'s Hand`;
   document.getElementById('setter-sub').textContent =
     `${me.chips} chips · bet: ${me.bet}${me.bonusBet>0?` + bonus ${me.bonusBet}`:''}`;
@@ -892,53 +1081,53 @@ function openSetter() {
 function closeSetter() { document.getElementById('hand-setter').classList.remove('open'); }
 
 function renderSetter() {
-  document.getElementById('high-hand-box').classList.toggle('active-target', setterTarget==='high');
-  document.getElementById('low-hand-box').classList.toggle('active-target',  setterTarget==='low');
-  const rem = setterTarget==='high' ? 5-tempHigh.length : 2-tempLow.length;
-  const hand = setterTarget==='high' ? 'High Hand' : 'Low Hand';
+  const remaining = 2 - tempLow.length;
   document.getElementById('target-ind').textContent =
-    tempLow.length===2 && tempHigh.length===5
-      ? '✓ All cards assigned — review and confirm'
-      : `▶ Filling: ${hand} (${rem} card${rem===1?'':'s'} remaining)`;
+    tempLow.length===2
+      ? '✓ Ready — review and confirm'
+      : `▶ Tap a High Hand card to move to Low Hand (${remaining} more needed)`;
 
-  document.getElementById('all-setter-cards').innerHTML =
-    tempUnassigned.map((c,i) => `<div onclick="assignCard(${i})">${clickCard(c)}</div>`).join('');
+  // High hand box: cards clickable → move to low
   document.getElementById('high-hand-cards').innerHTML =
-    tempHigh.map((c,i) => `<div onclick="removeCard('high',${i})">${clickCard(c)}</div>`).join('') +
-    (tempHigh.length<5 ? `<span style="font-size:10px;color:rgba(245,237,216,.22);font-style:italic">${5-tempHigh.length} more</span>` : '');
+    tempHigh.map((c,i)=>`<div onclick="moveToLow(${i})">${clickCard(c)}</div>`).join('') +
+    (tempHigh.length<5 ? `<span style="font-size:10px;color:rgba(245,237,216,.22);font-style:italic;align-self:center">&nbsp;${5-tempHigh.length} slot${5-tempHigh.length!==1?'s':''}</span>` : '');
+
+  // Low hand box: cards clickable → return to high
   document.getElementById('low-hand-cards').innerHTML =
-    tempLow.map((c,i) => `<div onclick="removeCard('low',${i})">${clickCard(c)}</div>`).join('') +
-    (tempLow.length<2 ? `<span style="font-size:10px;color:rgba(245,237,216,.22);font-style:italic">${2-tempLow.length} more</span>` : '');
-  document.getElementById('high-hand-rank').textContent = tempHigh.length===5 ? evalFiveClient(tempHigh) : '';
+    tempLow.map((c,i)=>`<div onclick="moveToHigh(${i})">${clickCard(c)}</div>`).join('') +
+    (tempLow.length<2 ? `<span style="font-size:10px;color:rgba(245,237,216,.22);font-style:italic;align-self:center">&nbsp;${2-tempLow.length} needed</span>` : '');
+
+  document.getElementById('high-hand-rank').textContent = tempHigh.length===5 ? evalFiveClient(tempHigh) : (tempHigh.length>5?`${tempHigh.length} cards — move ${tempHigh.length-5} to Low`:'');
   document.getElementById('low-hand-rank').textContent  = tempLow.length===2  ? evalTwoClient(tempLow)   : '';
+
+  // Highlight active target
+  document.getElementById('high-hand-box').classList.toggle('active-target', tempLow.length<2);
+  document.getElementById('low-hand-box').classList.toggle('active-target',  tempLow.length===2);
+}
+
+function moveToLow(i) {
+  if (tempLow.length >= 2) { toast('Low Hand is full — tap a Low Hand card to swap it back'); return; }
+  tempLow.push(tempHigh.splice(i,1)[0]);
+  renderSetter();
+}
+function moveToHigh(i) {
+  tempHigh.push(tempLow.splice(i,1)[0]);
+  renderSetter();
 }
 
 function clickCard(card) {
-  if (card.isJoker) return `<div class="card clickable joker"><div class="card-rank">★</div><div class="card-suit" style="font-size:7px">JKR</div></div>`;
-  const col = (card.suit==='♥'||card.suit==='♦') ? 'red' : 'black';
-  return `<div class="card clickable ${col}"><div class="card-rank">${card.rank}</div><div class="card-suit">${card.suit}</div></div>`;
+  if (card.isJoker) return `<div class="card card-lg joker clickable"><div class="card-rank">★</div><div class="card-suit" style="font-size:8px">JKR</div></div>`;
+  const col = (card.suit==='♥'||card.suit==='♦')?'red':'black';
+  return `<div class="card card-lg ${col} clickable"><div class="card-rank" style="font-size:12px">${card.rank}</div><div class="card-suit" style="font-size:10px">${card.suit}</div></div>`;
 }
-function assignCard(i) {
-  const card = tempUnassigned[i];
-  if (setterTarget==='high' && tempHigh.length<5) {
-    tempHigh.push(card); tempUnassigned.splice(i,1);
-    if (tempHigh.length===5) setterTarget='low';
-  } else if (setterTarget==='low' && tempLow.length<2) {
-    tempLow.push(card); tempUnassigned.splice(i,1);
-  } else {
-    toast('Both hands are full — tap a placed card to return it');
-  }
-  renderSetter();
-}
-function removeCard(hand, i) {
-  if (hand==='high') { tempUnassigned.push(tempHigh.splice(i,1)[0]); setterTarget='high'; }
-  else               { tempUnassigned.push(tempLow.splice(i,1)[0]);  setterTarget='low'; }
-  renderSetter();
-}
-function requestHouseWay() { socket.emit('houseWay', { code:roomCode }); }
+
+function requestHouseWay() { socket.emit('houseWay',{code:roomCode}); }
+
 function confirmHand() {
-  if (tempHigh.length!==5||tempLow.length!==2) { toast('Need 5 cards in High Hand and 2 in Low Hand'); return; }
-  socket.emit('setHand', { code:roomCode, highHand:tempHigh, lowHand:tempLow });
+  if (tempHigh.length!==5||tempLow.length!==2) {
+    toast(`Need 5 in High and 2 in Low (currently ${tempHigh.length}+${tempLow.length})`); return;
+  }
+  socket.emit('setHand',{code:roomCode,highHand:tempHigh,lowHand:tempLow});
   closeSetter();
 }
 
@@ -946,64 +1135,58 @@ function confirmHand() {
 //  BUY-IN
 // ════════════════════════════════════════════════════════════
 function openBuyIn() {
-  const me = gameState.players.find(p => p.id === myId);
-  document.getElementById('buyin-sub').textContent = `${me.name} · stack: ${me.chips} chips`;
-  document.getElementById('buyin-custom').value = '';
+  const me = gameState.players.find(p=>p.id===myId);
+  document.getElementById('buyin-sub').textContent=`${me.name} · stack: ${me.chips} chips`;
+  document.getElementById('buyin-custom').value='';
   document.getElementById('buyin-modal').classList.add('open');
 }
 function closeBuyIn() { document.getElementById('buyin-modal').classList.remove('open'); }
 function doBuyIn(a) { socket.emit('buyIn',{code:roomCode,amount:a}); toast(`Added ${a} chips`); closeBuyIn(); }
 function doBuyInCustom() {
-  const v = parseInt(document.getElementById('buyin-custom').value);
+  const v=parseInt(document.getElementById('buyin-custom').value);
   if (!v||v<1) { toast('Enter a valid amount'); return; }
   doBuyIn(v);
 }
 
 // ════════════════════════════════════════════════════════════
-//  STATS — includes Session Best Hand trophy
+//  STATS
 // ════════════════════════════════════════════════════════════
 function showStats() {
   if (!gameState) return;
   const sbh = gameState.sessionBestHand;
-  const hb  = gameState.houseBonus || {collected:0,paid:0,rounds:0};
+  const hb  = gameState.houseBonus||{collected:0,paid:0,rounds:0};
   const hn  = hb.collected - hb.paid;
-  const hnStr = hn >= 0 ? `+${hn}` : `${hn}`;
+  const hnStr = hn>=0?`+${hn}`:`${hn}`;
 
-  // Best hand trophy
   let bestHTML;
   if (sbh) {
-    const bankerTag = sbh.isBanker ? ' <span style="font-size:10px;color:rgba(201,168,76,.5)">(as Banker)</span>' : '';
-    bestHTML = `
-      <div class="best-hand-block">
-        <div class="best-hand-crown">🏆</div>
-        <div class="best-hand-label">Session Best High Hand</div>
-        <div class="best-hand-name">${esc(sbh.handName)}</div>
-        <div class="best-hand-who">held by <span>${esc(sbh.playerName)}</span>${bankerTag}</div>
-        <div class="best-hand-round">Round ${sbh.round}</div>
-      </div>`;
+    const bankerTag = sbh.isBanker?` <span style="font-size:10px;color:rgba(201,168,76,.5)">(as Banker)</span>`:'';
+    bestHTML=`<div class="best-hand-block">
+      <div class="best-hand-crown">🏆</div>
+      <div class="best-hand-label">Session Best High Hand</div>
+      <div class="best-hand-name">${esc(sbh.handName)}</div>
+      <div class="best-hand-who">held by <span>${esc(sbh.playerName)}</span>${bankerTag}</div>
+      <div class="best-hand-round">Round ${sbh.round}</div>
+    </div>`;
   } else {
-    bestHTML = `
-      <div class="best-hand-block">
-        <div class="best-hand-crown" style="opacity:.3">🏆</div>
-        <div class="best-hand-label">Session Best High Hand</div>
-        <div class="best-hand-empty">No hands played yet</div>
-      </div>`;
+    bestHTML=`<div class="best-hand-block">
+      <div class="best-hand-crown" style="opacity:.3">🏆</div>
+      <div class="best-hand-label">Session Best High Hand</div>
+      <div class="best-hand-empty">No hands played yet</div>
+    </div>`;
   }
 
-  // House bonus ledger
-  const houseHTML = `
-    <div class="stat-card house-block">
-      <div class="stat-player">🎰 House Bonus Ledger</div>
-      <div class="house-nums">
-        <div class="house-num"><div class="house-num-lbl">Collected</div><div class="house-num-val" style="color:#5dde8a">+${hb.collected}</div><div style="font-size:9px;color:rgba(245,237,216,.3)">losing bets</div></div>
-        <div class="house-num"><div class="house-num-lbl">Paid Out</div><div class="house-num-val" style="color:#f08080">-${hb.paid}</div><div style="font-size:9px;color:rgba(245,237,216,.3)">winning payouts</div></div>
-        <div class="house-num"><div class="house-num-lbl">House Net</div><div class="house-num-val ${hn>=0?'nc-pos':'nc-neg'}">${hnStr}</div><div style="font-size:9px;color:rgba(245,237,216,.3)">over ${hb.rounds} bet${hb.rounds!==1?'s':''}</div></div>
-      </div>
-    </div>`;
+  const houseHTML=`<div class="stat-card house-block">
+    <div class="stat-player">🎰 House Bonus Ledger</div>
+    <div class="house-nums">
+      <div class="house-num"><div class="house-num-lbl">Collected</div><div class="house-num-val" style="color:#5dde8a">+${hb.collected}</div></div>
+      <div class="house-num"><div class="house-num-lbl">Paid Out</div><div class="house-num-val" style="color:#f08080">-${hb.paid}</div></div>
+      <div class="house-num"><div class="house-num-lbl">House Net</div><div class="house-num-val ${hn>=0?'nc-pos':'nc-neg'}">${hnStr}</div></div>
+    </div>
+  </div>`;
 
-  // Player cards
-  const playerHTML = gameState.players.map(p => {
-    const s=p.stats, net=s.netChips, nc=net>0?'nc-pos':net<0?'nc-neg':'';
+  const playerHTML = gameState.players.map(p=>{
+    const s=p.stats,net=s.netChips,nc=net>0?'nc-pos':net<0?'nc-neg':'';
     const ns=net>0?`+${net}`:net;
     return `<div class="stat-card">
       <div class="stat-player">${esc(p.name)}${p.id===myId?' (You)':''}</div>
@@ -1026,38 +1209,38 @@ function hideStats() { document.getElementById('stats-panel').classList.remove('
 // ════════════════════════════════════════════════════════════
 //  CLIENT-SIDE HAND EVALUATION (display labels only)
 // ════════════════════════════════════════════════════════════
-const RV = {2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
+const RV={2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
 function evalFiveClient(cards) {
-  if (!cards||cards.length!==5||cards.some(c=>c.hidden)) return '?';
+  if (!cards||cards.length!==5||cards.some(c=>!c||c.hidden)) return '?';
   if (cards.some(c=>c.isJoker)) {
     const o=cards.filter(c=>!c.isJoker); let best={rank:-1,name:''};
-    for(const s of['♠','♥','♦','♣']) for(const r of['2','3','4','5','6','7','8','9','10','J','Q','K','A']){
-      const v=evalNJ([...o,{rank:r,suit:s}]); if(v.rank>best.rank) best=v;
+    for(const s of['♠','♥','♦','♣'])for(const r of['2','3','4','5','6','7','8','9','10','J','Q','K','A']){
+      const v=evalNJ([...o,{rank:r,suit:s}]);if(v.rank>best.rank)best=v;
     }
     return best.name;
   }
   return evalNJ(cards).name;
 }
-function evalNJ(cards) {
+function evalNJ(cards){
   const rv=cards.map(c=>RV[c.rank]).sort((a,b)=>b-a);
   const suits=cards.map(c=>c.suit);
-  const cnt={}; rv.forEach(v=>cnt[v]=(cnt[v]||0)+1);
+  const cnt={};rv.forEach(v=>cnt[v]=(cnt[v]||0)+1);
   const freq=Object.values(cnt).sort((a,b)=>b-a);
   const fl=suits.every(s=>s===suits[0]);
   const uv=[...new Set(rv)];
   const st=uv.length===5&&(uv[0]-uv[4]===4||JSON.stringify(uv)==='[14,5,4,3,2]');
-  if(fl&&st) return {rank:8,name:rv[0]===14?'Royal Flush':'Straight Flush'};
-  if(freq[0]===4) return {rank:7,name:'Four of a Kind'};
-  if(freq[0]===3&&freq[1]===2) return {rank:6,name:'Full House'};
-  if(fl) return {rank:5,name:'Flush'};
-  if(st) return {rank:4,name:'Straight'};
-  if(freq[0]===3) return {rank:3,name:'Three of a Kind'};
-  if(freq[0]===2&&freq[1]===2) return {rank:2,name:'Two Pair'};
-  if(freq[0]===2) return {rank:1,name:'One Pair'};
-  return {rank:0,name:'High Card'};
+  if(fl&&st)return{rank:8,name:rv[0]===14?'Royal Flush':'Straight Flush'};
+  if(freq[0]===4)return{rank:7,name:'Four of a Kind'};
+  if(freq[0]===3&&freq[1]===2)return{rank:6,name:'Full House'};
+  if(fl)return{rank:5,name:'Flush'};
+  if(st)return{rank:4,name:'Straight'};
+  if(freq[0]===3)return{rank:3,name:'Three of a Kind'};
+  if(freq[0]===2&&freq[1]===2)return{rank:2,name:'Two Pair'};
+  if(freq[0]===2)return{rank:1,name:'One Pair'};
+  return{rank:0,name:'High Card'};
 }
-function evalTwoClient(cards) {
-  if(!cards||cards.length!==2||cards.some(c=>c.hidden)) return '?';
+function evalTwoClient(cards){
+  if(!cards||cards.length!==2||cards.some(c=>!c||c.hidden))return'?';
   const rv=cards.map(c=>c.isJoker?14:RV[c.rank]).sort((a,b)=>b-a);
   return rv[0]===rv[1]?'Pair':'High Card';
 }
@@ -1065,19 +1248,17 @@ function evalTwoClient(cards) {
 // ════════════════════════════════════════════════════════════
 //  UTILS
 // ════════════════════════════════════════════════════════════
-function showScreen(id) {
+function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-function toast(msg, dur=2800) {
+function toast(msg,dur=2800){
   const el=document.getElementById('toast');
-  el.textContent=msg; el.classList.add('show');
-  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),dur);
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),dur);
 }
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-document.getElementById('join-code').addEventListener('input', function(){ this.value=this.value.toUpperCase(); });
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+document.getElementById('join-code').addEventListener('input',function(){this.value=this.value.toUpperCase();});
 </script>
 </body>
 </html>

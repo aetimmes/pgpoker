@@ -560,9 +560,10 @@ function safeState(room, forSocketId) {
     bonusPayouts: g.bonusPayouts,
     houseBonus: g.houseBonus,
     bankerAceHighPush: g.bankerAceHighPush || false,
+    dealOrderNum: g.dealOrderNum || null,
     players: g.players.map(p => {
       const isMe = p.id === forSocketId;
-      const isRevealing = g.phase === 'reveal' || g.phase === 'done';
+      const isBanker = g.players.indexOf(p) === g.bankerIdx;
       return {
         id: p.id,
         name: p.name,
@@ -578,10 +579,10 @@ function safeState(room, forSocketId) {
         bonusWon: p.bonusWon,
         revealed: p.revealed,
         stats: p.stats,
-        // Hand cards: visible to owner always, to all after their reveal step
-        hand: (isMe || p.revealed) ? p.hand : (p.hand.length > 0 ? p.hand.map(() => ({ hidden: true })) : []),
-        highHand: (isMe || p.revealed) ? p.highHand : (p.highHand.length > 0 ? p.highHand.map(() => ({ hidden: true })) : []),
-        lowHand: (isMe || p.revealed) ? p.lowHand : (p.lowHand.length > 0 ? p.lowHand.map(() => ({ hidden: true })) : []),
+        // Banker cards always fully visible to all; player cards visible to owner + after reveal
+        hand: (isMe || isBanker || p.revealed) ? p.hand : (p.hand.length > 0 ? p.hand.map(() => ({ hidden: true })) : []),
+        highHand: (isMe || isBanker || p.revealed) ? p.highHand : (p.highHand.length > 0 ? p.highHand.map(() => ({ hidden: true })) : []),
+        lowHand: (isMe || isBanker || p.revealed) ? p.lowHand : (p.lowHand.length > 0 ? p.lowHand.map(() => ({ hidden: true })) : []),
       };
     }),
     sessionBestHand: g.sessionBestHand,
@@ -799,11 +800,14 @@ io.on('connection', (socket) => {
     if (missing.length > 0) { socket.emit('error', `${missing.map(p => p.name).join(', ')} must bet or fold`); return; }
 
     g.deck = shuffle(buildDeck());
+    // Roll deal order number 1-7 (1=banker, 2=right of banker, clockwise)
+    g.dealOrderNum = Math.floor(Math.random() * 7) + 1;
     g.players.forEach(p => {
       p.hand = []; p.highHand = []; p.lowHand = [];
       p.handSet = false; p.result = null;
       p.netChips = null; p.bonusNet = null;
       p.bonusLabel = ''; p.bonusWon = false;
+      p.revealed = false;
     });
     const active = g.players.filter((p, i) => i === g.bankerIdx || (!p.folded && p.bet > 0));
     active.forEach(p => { for (let i = 0; i < 7; i++) p.hand.push(g.deck.pop()); });
@@ -874,6 +878,7 @@ io.on('connection', (socket) => {
     g.bankerIdx = (g.bankerIdx + 1) % g.players.length;
     g.round++;
     g.revealStep = -1;
+    g.dealOrderNum = null;
     g.phase = 'bet';
     broadcastState(code);
   });
