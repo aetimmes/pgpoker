@@ -543,6 +543,7 @@ function makeGame(hostId, hostName, startingChips, bonusPayouts) {
       bonusLabel: '',
       bonusWon: false,
       revealed: false,
+      seatIndex: null,  // null = banker/dealer seat; 0-5 = arc seats
       stats: { wins: 0, losses: 0, pushes: 0, rounds: 0, netChips: 0, buyins: 0 }
     }]
   };
@@ -579,6 +580,8 @@ function safeState(room, forSocketId) {
         bonusWon: p.bonusWon,
         revealed: p.revealed,
         lateJoiner: p.lateJoiner || false,
+        seatIndex: p.seatIndex !== undefined ? p.seatIndex : null,
+        disconnected: p.disconnected || false,
         stats: p.stats,
         // Banker cards always fully visible to all; player cards visible to owner + after reveal
         hand: (isMe || isBanker || p.revealed) ? p.hand : (p.hand.length > 0 ? p.hand.map(() => ({ hidden: true })) : []),
@@ -701,25 +704,64 @@ io.on('connection', (socket) => {
     broadcastState(code);
   });
 
-  // Join room (allowed at any phase — late joiners sit out current round)
-  socket.on('joinRoom', ({ code, name }) => {
+  // Request seat list — sent before joinRoom so player can pick a seat
+  socket.on('requestSeats', ({ code }) => {
     const g = rooms[code];
     if (!g) { socket.emit('error', 'Room not found'); return; }
-    if (g.players.length >= 7) { socket.emit('error', 'Room is full (max 7 players)'); return; }
-    if (g.players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+    const takenSeats = g.players
+      .filter(p => p.seatIndex !== null && p.seatIndex !== undefined)
+      .map(p => ({ seatIndex: p.seatIndex, name: p.name, disconnected: p.disconnected || false }));
+    socket.emit('seatList', { takenSeats, phase: g.phase, roomName: code });
+  });
+
+  // Join room with chosen seat (allowed at any phase — late joiners sit out current round)
+  socket.on('joinRoom', ({ code, name, seatIndex }) => {
+    const g = rooms[code];
+    if (!g) { socket.emit('error', 'Room not found'); return; }
+
+    // Check for reconnect: same name, disconnected player holding seat
+    const existing = g.players.find(p =>
+      p.name.toLowerCase() === name.toLowerCase() && p.disconnected
+    );
+    if (existing) {
+      // Reconnect — restore socket id, clear disconnected flag, cancel seat release timer
+      if (existing.seatReleaseTimer) {
+        clearTimeout(existing.seatReleaseTimer);
+        existing.seatReleaseTimer = null;
+      }
+      existing.id = socket.id;
+      existing.disconnected = false;
+      socket.join(code);
+      socket.emit('joinedRoom', { code });
+      broadcastState(code);
+      return;
+    }
+
+    // Validate name uniqueness (non-disconnected players)
+    if (g.players.some(p => p.name.toLowerCase() === name.toLowerCase() && !p.disconnected)) {
       socket.emit('error', 'That name is already taken'); return;
     }
-    // Late joiner: mark as sitting out this round so they don't interfere with current play
+    // Validate seat
+    if (seatIndex === undefined || seatIndex === null) {
+      socket.emit('error', 'No seat selected'); return;
+    }
+    if (g.players.some(p => p.seatIndex === seatIndex && !p.disconnected)) {
+      socket.emit('error', 'That seat is already taken'); return;
+    }
+    if (g.players.length >= 7) { socket.emit('error', 'Room is full (max 7 players)'); return; }
+
+    // Late joiner: mark as sitting out this round
     const sittingOut = g.phase !== 'lobby' && g.phase !== 'bet';
     g.players.push({
       id: socket.id, name,
       chips: g.startingChips, bet: 0, bonusBet: 0,
       hand: [], highHand: [], lowHand: [],
       handSet: false,
-      folded: sittingOut,   // folded=true means they sit out current round
+      folded: sittingOut,
       lateJoiner: sittingOut,
       result: null, netChips: null, bonusNet: null, bonusLabel: '', bonusWon: false,
       revealed: false,
+      seatIndex,
       stats: { wins: 0, losses: 0, pushes: 0, rounds: 0, netChips: 0, buyins: 0 }
     });
     socket.join(code);
@@ -929,20 +971,23 @@ io.on('connection', (socket) => {
     for (const [code, g] of Object.entries(rooms)) {
       const idx = g.players.findIndex(p => p.id === socket.id);
       if (idx === -1) continue;
-      // Notify others
       io.to(code).emit('playerLeft', { name: g.players[idx].name });
-      // If game hasn't started just remove them
       if (g.phase === 'lobby') {
         g.players.splice(idx, 1);
         if (g.players.length === 0) { delete rooms[code]; break; }
-        // Transfer host if needed
         if (g.hostId === socket.id) g.hostId = g.players[0].id;
-      }
-      // If game in progress, mark as folded/inactive
-      else {
+      } else {
+        // Mark disconnected, hold seat for 60 seconds then release
         g.players[idx].folded = true;
         g.players[idx].bet = 0;
         g.players[idx].disconnected = true;
+        g.players[idx].seatReleaseTimer = setTimeout(() => {
+          const stillThere = g.players.findIndex(p => p.id === socket.id);
+          if (stillThere !== -1 && g.players[stillThere].disconnected) {
+            g.players.splice(stillThere, 1);
+            broadcastState(code);
+          }
+        }, 60000);
       }
       broadcastState(code);
       break;
