@@ -578,6 +578,7 @@ function safeState(room, forSocketId) {
         bonusLabel: p.bonusLabel,
         bonusWon: p.bonusWon,
         revealed: p.revealed,
+        lateJoiner: p.lateJoiner || false,
         stats: p.stats,
         // Banker cards always fully visible to all; player cards visible to owner + after reveal
         hand: (isMe || isBanker || p.revealed) ? p.hand : (p.hand.length > 0 ? p.hand.map(() => ({ hidden: true })) : []),
@@ -700,20 +701,23 @@ io.on('connection', (socket) => {
     broadcastState(code);
   });
 
-  // Join room
+  // Join room (allowed at any phase — late joiners sit out current round)
   socket.on('joinRoom', ({ code, name }) => {
     const g = rooms[code];
     if (!g) { socket.emit('error', 'Room not found'); return; }
-    if (g.phase !== 'lobby') { socket.emit('error', 'Game already in progress'); return; }
     if (g.players.length >= 7) { socket.emit('error', 'Room is full (max 7 players)'); return; }
     if (g.players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
       socket.emit('error', 'That name is already taken'); return;
     }
+    // Late joiner: mark as sitting out this round so they don't interfere with current play
+    const sittingOut = g.phase !== 'lobby' && g.phase !== 'bet';
     g.players.push({
       id: socket.id, name,
       chips: g.startingChips, bet: 0, bonusBet: 0,
       hand: [], highHand: [], lowHand: [],
-      handSet: false, folded: false,
+      handSet: false,
+      folded: sittingOut,   // folded=true means they sit out current round
+      lateJoiner: sittingOut,
       result: null, netChips: null, bonusNet: null, bonusLabel: '', bonusWon: false,
       revealed: false,
       stats: { wins: 0, losses: 0, pushes: 0, rounds: 0, netChips: 0, buyins: 0 }
@@ -871,6 +875,7 @@ io.on('connection', (socket) => {
       p.bet = 0; p.bonusBet = 0;
       p.hand = []; p.highHand = []; p.lowHand = [];
       p.handSet = false; p.folded = false;
+      p.lateJoiner = false;
       p.result = null; p.netChips = null;
       p.bonusNet = null; p.bonusLabel = ''; p.bonusWon = false;
       p.revealed = false;
