@@ -514,7 +514,7 @@ function getBonusPayout(sevenResult, bp) {
 }
 
 // ─── GAME STATE FACTORY ──────────────────────────────────────────────────────
-function makeGame(hostId, hostName, startingChips, bonusPayouts) {
+function makeGame(hostId, hostName, startingChips, bonusPayouts, poolContribution) {
   return {
     hostId,
     phase: 'lobby',   // lobby | bet | set | reveal | done
@@ -523,6 +523,8 @@ function makeGame(hostId, hostName, startingChips, bonusPayouts) {
     deck: [],
     startingChips,
     bonusPayouts,
+    poolContribution: poolContribution || 0,
+    bonusPool: 0,
     houseBonus: { collected: 0, paid: 0, rounds: 0 },
     sessionBestHand: null,
     revealStep: -1,
@@ -562,6 +564,9 @@ function safeState(room, forSocketId) {
     houseBonus: g.houseBonus,
     bankerAceHighPush: g.bankerAceHighPush || false,
     bankerId: g.players[g.bankerIdx] ? g.players[g.bankerIdx].id : null,
+    bonusPool: g.bonusPool || 0,
+    poolContribution: g.poolContribution || 0,
+    bankerInsolvent: g.bankerInsolvent || false,
     dealOrderNum: g.dealOrderNum || null,
     players: g.players.map(p => {
       const isMe = p.id === forSocketId;
@@ -581,6 +586,7 @@ function safeState(room, forSocketId) {
         bonusWon: p.bonusWon,
         revealed: p.revealed,
         lateJoiner: p.lateJoiner || false,
+        poolBlocked: p.poolBlocked || false,
         seatIndex: p.seatIndex !== undefined ? p.seatIndex : null,
         disconnected: p.disconnected || false,
         stats: p.stats,
@@ -610,35 +616,34 @@ function settleRound(room) {
   const bankerHigh = evalFiveHand(banker.highHand);
   const bankerLow = evalTwoHand(banker.lowHand);
 
-  // Ace-high push rule: if banker's high hand is Ace-high (rank 0, top card = Ace), all active players push
+  // Ace-high push rule
   const bankerAceHighPush = bankerHigh.rank === 0 && bankerHigh.tiebreak[0] === 14;
 
+  // First pass: calculate results and what banker owes / receives
+  let bankerDelta = 0; // net chips banker must pay (positive) or receive (negative)
   g.players.forEach((p, idx) => {
     if (idx === g.bankerIdx || p.folded || p.bet === 0) return;
     const pHigh = evalFiveHand(p.highHand);
-    const pLow = evalTwoHand(p.lowHand);
+    const pLow  = evalTwoHand(p.lowHand);
     const highWin = compareFive(pHigh, bankerHigh);
-    const lowWin = compareTwo(pLow, bankerLow);
+    const lowWin  = compareTwo(pLow, bankerLow);
 
     let result, net;
-    if (bankerAceHighPush) {
-      // Banker has Ace-high: push all around regardless
-      net = 0; result = 'push';
-    } else if (highWin > 0 && lowWin > 0)      { net =  p.bet; result = 'win'; }
-    else if (highWin < 0 && lowWin < 0)         { net = -p.bet; result = 'lose'; }
-    else                                         { net = 0;      result = 'push'; }
+    if (bankerAceHighPush)              { net = 0;      result = 'push'; }
+    else if (highWin > 0 && lowWin > 0) { net =  p.bet; result = 'win';  }
+    else if (highWin < 0 && lowWin < 0) { net = -p.bet; result = 'lose'; }
+    else                                 { net = 0;      result = 'push'; }
 
-    p.chips += net;
-    banker.chips -= net;
-    p.result = result;
+    p.result   = result;
     p.netChips = net;
+    bankerDelta += net; // positive = banker pays out, negative = banker collects
     p.stats.rounds++;
     p.stats.netChips += net;
     if (result === 'win')       p.stats.wins++;
     else if (result === 'lose') p.stats.losses++;
     else                        p.stats.pushes++;
 
-    // Bonus
+    // Bonus bet — paid from bonusPool
     let bonusNet = 0, bonusLabel = '', bonusWon = false;
     if (p.bonusBet > 0 && p.hand.length === 7) {
       const sr = evalSevenCardBonus(p.hand);
@@ -647,19 +652,43 @@ function settleRound(room) {
         bonusNet = p.bonusBet * payout.mult;
         bonusLabel = `${payout.label} (${payout.mult}×)`;
         bonusWon = true;
-        g.houseBonus.paid += bonusNet;
+        // Ensure pool can cover; top up all players if needed
+        ensurePoolCovers(g, bonusNet);
+        g.bonusPool -= bonusNet;
+        p.chips += bonusNet;
       } else {
         bonusNet = -p.bonusBet;
         bonusLabel = 'No bonus';
-        g.houseBonus.collected += p.bonusBet;
+        // Lost bonus bet flows into pool
+        g.bonusPool += p.bonusBet;
+        p.chips -= p.bonusBet;
       }
-      p.chips += bonusNet;
       g.houseBonus.rounds++;
     }
-    p.bonusNet = bonusNet;
-    p.bonusLabel = bonusLabel;
-    p.bonusWon = bonusWon;
+    p.bonusNet    = bonusNet;
+    p.bonusLabel  = bonusLabel;
+    p.bonusWon    = bonusWon;
   });
+
+  // Fix #1 — check if banker can cover net payout
+  const bankerOwes = bankerDelta; // chips banker must pay winners (may be negative if banker wins net)
+  const wouldGoNeg = banker.chips - bankerOwes < 0;
+
+  if (wouldGoNeg && bankerOwes > 0) {
+    // Banker insolvent — suspend chip transfers, flag for forced buy-in
+    g.bankerInsolvent = true;
+    g.pendingBankerDelta = bankerOwes;
+    // Do NOT move chips yet — players' netChips are set for display only
+  } else {
+    // Solvent — execute transfers now
+    g.bankerInsolvent = false;
+    g.pendingBankerDelta = 0;
+    g.players.forEach((p, idx) => {
+      if (idx === g.bankerIdx || p.folded || p.bet === 0) return;
+      p.chips += p.netChips;
+      banker.chips -= p.netChips;
+    });
+  }
 
   g.bankerAceHighPush = bankerAceHighPush;
 
@@ -692,19 +721,52 @@ function settleRound(room) {
   g.phase = 'done';
 }
 
+// ─── RATE LIMITER (Fix #3) ───────────────────────────────────────────────────
+const betEventCounts = {}; // socketId -> { count, resetAt }
+function rateLimitBet(socketId) {
+  const now = Date.now();
+  if (!betEventCounts[socketId] || betEventCounts[socketId].resetAt < now) {
+    betEventCounts[socketId] = { count: 1, resetAt: now + 1000 };
+    return false; // not limited
+  }
+  betEventCounts[socketId].count++;
+  return betEventCounts[socketId].count > 10; // limited if > 10/sec
+}
+
 // ─── BANKER AUTH HELPER ──────────────────────────────────────────────────────
 function isCurrentBanker(g, socketId) {
   return g && g.players[g.bankerIdx] && g.players[g.bankerIdx].id === socketId;
+}
+
+// ─── BONUS POOL HELPERS ──────────────────────────────────────────────────────
+// Collect one poolContribution from every active (non-disconnected) player
+function collectPoolContributions(g) {
+  const contrib = g.poolContribution || 0;
+  if (contrib <= 0) return;
+  g.players.forEach(p => {
+    if (p.disconnected) return;
+    const actual = Math.min(contrib, p.chips);
+    p.chips -= actual;
+    g.bonusPool += actual;
+  });
+}
+
+// Ensure pool has enough to cover payout; top up if needed
+function ensurePoolCovers(g, amount) {
+  if (g.bonusPool >= amount) return;
+  collectPoolContributions(g);
+  // If still not enough after one top-up, pool just goes as negative as needed
+  // (edge case: small pool, huge royal flush payout)
 }
 
 // ─── SOCKET EVENTS ───────────────────────────────────────────────────────────
 io.on('connection', (socket) => {
 
   // Create room
-  socket.on('createRoom', ({ name, startingChips, bonusPayouts }) => {
+  socket.on('createRoom', ({ name, startingChips, bonusPayouts, poolContribution }) => {
     let code;
     do { code = makeCode(); } while (rooms[code]);
-    rooms[code] = makeGame(socket.id, name, startingChips, bonusPayouts);
+    rooms[code] = makeGame(socket.id, name, startingChips, bonusPayouts, Math.max(0, parseInt(poolContribution)||0));
     socket.join(code);
     socket.emit('roomCreated', { code });
     broadcastState(code);
@@ -758,13 +820,25 @@ io.on('connection', (socket) => {
 
     // Late joiner: mark as sitting out this round
     const sittingOut = g.phase !== 'lobby' && g.phase !== 'bet';
+    // Charge pool contribution for late joiners if game already started
+    let newChips = g.startingChips;
+    let poolBlocked = false;
+    if (g.phase !== 'lobby' && g.poolContribution > 0) {
+      if (newChips >= g.poolContribution) {
+        newChips -= g.poolContribution;
+        g.bonusPool += g.poolContribution;
+      } else {
+        poolBlocked = true;
+      }
+    }
     g.players.push({
       id: socket.id, name,
-      chips: g.startingChips, bet: 0, bonusBet: 0,
+      chips: newChips, bet: 0, bonusBet: 0,
       hand: [], highHand: [], lowHand: [],
       handSet: false,
       folded: sittingOut,
       lateJoiner: sittingOut,
+      poolBlocked,
       result: null, netChips: null, bonusNet: null, bonusLabel: '', bonusWon: false,
       revealed: false,
       seatIndex,
@@ -780,16 +854,30 @@ io.on('connection', (socket) => {
     const g = rooms[code];
     if (!g || g.hostId !== socket.id) return;
     if (g.players.length < 2) { socket.emit('error', 'Need at least 2 players to start'); return; }
+    // Fix #5 — collect initial bonus pool contributions from all players
+    // Players who can't afford contribution are auto-folded (blocked)
+    if (g.poolContribution > 0) {
+      g.players.forEach(p => {
+        if (p.chips >= g.poolContribution) {
+          p.chips -= g.poolContribution;
+          g.bonusPool += g.poolContribution;
+        } else {
+          // Can't afford — mark as needing buyin; they'll be blocked from betting
+          p.poolBlocked = true;
+        }
+      });
+    }
     g.phase = 'bet';
     broadcastState(code);
   });
 
   // Place bet
   socket.on('placeBet', ({ code, amount }) => {
+    if (rateLimitBet(socket.id)) return;
     const g = rooms[code];
     if (!g || g.phase !== 'bet') return;
     const p = g.players.find(p => p.id === socket.id);
-    if (!p || p.folded) return;
+    if (!p || p.folded || p.poolBlocked) return;
     const idx = g.players.indexOf(p);
     if (idx === g.bankerIdx) return;
     const available = p.chips - p.bonusBet;
@@ -800,6 +888,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('clearBet', ({ code }) => {
+    if (rateLimitBet(socket.id)) return;
     const g = rooms[code];
     if (!g || g.phase !== 'bet') return;
     const p = g.players.find(p => p.id === socket.id);
@@ -807,10 +896,11 @@ io.on('connection', (socket) => {
   });
 
   socket.on('placeBonusBet', ({ code, amount }) => {
+    if (rateLimitBet(socket.id)) return;
     const g = rooms[code];
     if (!g || g.phase !== 'bet') return;
     const p = g.players.find(p => p.id === socket.id);
-    if (!p || p.folded) return;
+    if (!p || p.folded || p.poolBlocked) return;
     const idx = g.players.indexOf(p);
     if (idx === g.bankerIdx) return;
     const available = p.chips - p.bet - p.bonusBet;
@@ -821,6 +911,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('clearBonusBet', ({ code }) => {
+    if (rateLimitBet(socket.id)) return;
     const g = rooms[code];
     if (!g || g.phase !== 'bet') return;
     const p = g.players.find(p => p.id === socket.id);
@@ -828,6 +919,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('fold', ({ code }) => {
+    if (rateLimitBet(socket.id)) return;
     const g = rooms[code];
     if (!g || g.phase !== 'bet') return;
     const p = g.players.find(p => p.id === socket.id);
@@ -835,10 +927,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('unfold', ({ code }) => {
+    if (rateLimitBet(socket.id)) return;
     const g = rooms[code];
     if (!g || g.phase !== 'bet') return;
     const p = g.players.find(p => p.id === socket.id);
-    if (p && p.chips > 0) { p.folded = false; broadcastState(code); }
+    // Cannot unfold if pool-blocked
+    if (p && p.chips > 0 && !p.poolBlocked) { p.folded = false; broadcastState(code); }
   });
 
   // Deal (current banker only)
@@ -867,12 +961,18 @@ io.on('connection', (socket) => {
     broadcastState(code);
   });
 
-  // Set hand
+  // Set hand (banker must set before players can confirm)
   socket.on('setHand', ({ code, highHand, lowHand }) => {
     const g = rooms[code];
     if (!g || g.phase !== 'set') return;
     const p = g.players.find(p => p.id === socket.id);
     if (!p || p.hand.length === 0) return;
+    const pIdx = g.players.indexOf(p);
+    const isBanker = pIdx === g.bankerIdx;
+    // Non-bankers cannot finalise until banker has set
+    if (!isBanker && !g.players[g.bankerIdx].handSet) {
+      socket.emit('error', 'Banker must set their hand first'); return;
+    }
     if (highHand.length !== 5 || lowHand.length !== 2) {
       socket.emit('error', 'Must have 5 cards in high hand and 2 in low hand'); return;
     }
@@ -919,11 +1019,14 @@ io.on('connection', (socket) => {
   socket.on('nextRound', ({ code }) => {
     const g = rooms[code];
     if (!g || !isCurrentBanker(g, socket.id) || g.phase !== 'done') return;
+    // Fix #1 — block Next Round while banker is insolvent
+    if (g.bankerInsolvent) { socket.emit('error', 'Banker must buy in to cover pending payouts first'); return; }
     g.players.forEach(p => {
       p.bet = 0; p.bonusBet = 0;
       p.hand = []; p.highHand = []; p.lowHand = [];
       p.handSet = false; p.folded = false;
       p.lateJoiner = false;
+      p.poolBlocked = false; // cleared each round — they'll be re-checked on next deal
       p.result = null; p.netChips = null;
       p.bonusNet = null; p.bonusLabel = ''; p.bonusWon = false;
       p.revealed = false;
@@ -932,6 +1035,8 @@ io.on('connection', (socket) => {
     g.round++;
     g.revealStep = -1;
     g.dealOrderNum = null;
+    g.bankerInsolvent = false;
+    g.pendingBankerDelta = 0;
     g.phase = 'bet';
     broadcastState(code);
   });
@@ -944,14 +1049,42 @@ io.on('connection', (socket) => {
     broadcastState(code);
   });
 
-  // Buy in
+  // Buy in (Fix #4: cap 10000; Fix #1: resolve insolvency; Fix #5: unblock pool)
   socket.on('buyIn', ({ code, amount }) => {
     const g = rooms[code];
-    if (!g || g.phase !== 'bet') return;
+    if (!g) return;
     const p = g.players.find(p => p.id === socket.id);
     if (!p || amount < 1) return;
-    p.chips += amount;
-    p.stats.buyins += amount;
+    // Cap at 10,000
+    const headroom = Math.max(0, 10000 - p.chips);
+    const actual = Math.min(amount, headroom);
+    if (actual <= 0) { return; } // already at cap
+    p.chips += actual;
+    p.stats.buyins += actual;
+
+    // Unblock if previously pool-blocked and can now afford contribution
+    if (p.poolBlocked && g.poolContribution > 0 && p.chips >= g.poolContribution) {
+      p.chips -= g.poolContribution;
+      g.bonusPool += g.poolContribution;
+      p.poolBlocked = false;
+    }
+
+    // Fix #1 — if banker bought in, check if insolvency can now be resolved
+    const isBanker = g.players.indexOf(p) === g.bankerIdx;
+    if (isBanker && g.bankerInsolvent && g.pendingBankerDelta > 0) {
+      const banker = p;
+      if (banker.chips >= g.pendingBankerDelta) {
+        // Banker can now cover — execute suspended transfers
+        g.players.forEach((pl, idx) => {
+          if (idx === g.bankerIdx || pl.folded || pl.bet === 0 || pl.result === null) return;
+          pl.chips += pl.netChips;
+          banker.chips -= pl.netChips;
+        });
+        g.bankerInsolvent = false;
+        g.pendingBankerDelta = 0;
+      }
+    }
+
     broadcastState(code);
   });
 
@@ -974,6 +1107,8 @@ io.on('connection', (socket) => {
 
   // Disconnect
   socket.on('disconnect', () => {
+    // Clean up rate limit entry
+    delete betEventCounts[socket.id];
     for (const [code, g] of Object.entries(rooms)) {
       const idx = g.players.findIndex(p => p.id === socket.id);
       if (idx === -1) continue;
@@ -991,9 +1126,27 @@ io.on('connection', (socket) => {
           const stillThere = g.players.findIndex(p => p.id === socket.id);
           if (stillThere !== -1 && g.players[stillThere].disconnected) {
             g.players.splice(stillThere, 1);
+            // Fix #2 — if removed player was banker, reassign
+            if (g.bankerIdx >= g.players.length) g.bankerIdx = 0;
             broadcastState(code);
           }
         }, 60000);
+
+        // Fix #2 — if banker disconnects during set phase, reassign immediately
+        if (g.phase === 'set' && idx === g.bankerIdx) {
+          // Find next non-disconnected player
+          let newBanker = -1;
+          for (let i = 1; i <= g.players.length; i++) {
+            const ni = (idx + i) % g.players.length;
+            if (!g.players[ni].disconnected) { newBanker = ni; break; }
+          }
+          if (newBanker !== -1) {
+            g.bankerIdx = newBanker;
+            // Notify the new banker via their socket
+            io.to(g.players[newBanker].id).emit('bankerReassigned',
+              { message: 'Banker disconnected — you are now Banker' });
+          }
+        }
       }
       broadcastState(code);
       break;
