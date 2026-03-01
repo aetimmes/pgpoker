@@ -486,7 +486,7 @@ function evalSevenCardBonus(cards) {
   for (let i = 0; i < 7; i++) for (let j = i + 1; j < 7; j++) {
     const five = cards.filter((_, k) => k !== i && k !== j);
     const ev = evalFiveHand(five);
-    if (ev.rank === 8 && ev.tiebreak[0] === 14) ev.isRoyal = true;
+    if (ev.rank === 8 && ev.tiebreak && ev.tiebreak[0] === 14) ev.isRoyal = true;
     if (compareFive(ev, best) > 0 || (ev.rank === best.rank && ev.isRoyal && !best.isRoyal)) best = { ...ev };
   }
 
@@ -611,7 +611,7 @@ function settleRound(room) {
   const bankerLow = evalTwoHand(banker.lowHand);
 
   // Ace-high push rule: if banker's high hand is Ace-high (rank 0, top card = Ace), all active players push
-  const bankerAceHighPush = bankerHigh.rank === 0 && bankerHigh.tiebreak[0] === 14;
+  const bankerAceHighPush = bankerHigh.rank === 0 && bankerHigh.tiebreak && bankerHigh.tiebreak[0] === 14;
 
   g.players.forEach((p, idx) => {
     if (idx === g.bankerIdx || p.folded || p.bet === 0) return;
@@ -877,8 +877,8 @@ io.on('connection', (socket) => {
       socket.emit('error', 'Must have 5 cards in high hand and 2 in low hand'); return;
     }
     // Validate cards belong to player's hand
-    const handKeys = p.hand.map(c => `${c.rank}${c.suit}`);
-    const submitted = [...highHand, ...lowHand].map(c => `${c.rank}${c.suit}`);
+    const handKeys = p.hand.map(c => c.isJoker ? 'JKR' : `${c.rank}${c.suit}`);
+    const submitted = [...highHand, ...lowHand].map(c => c.isJoker ? 'JKR' : `${c.rank}${c.suit}`);
     const valid = submitted.every(k => handKeys.includes(k)) && new Set(submitted).size === 7;
     if (!valid) { socket.emit('error', 'Invalid hand — cards do not match your dealt hand'); return; }
     p.highHand = highHand;
