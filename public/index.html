@@ -44,6 +44,8 @@ input[type=text],input[type=number]{width:100%;background:rgba(0,0,0,.4);border:
 input:focus{border-color:var(--gold)}
 .chip-presets{display:flex;gap:8px;flex-wrap:wrap}
 .chip-preset{flex:1;min-width:55px;text-align:center;padding:8px;background:rgba(0,0,0,.3);border:1px solid rgba(201,168,76,.2);border-radius:4px;cursor:pointer;font-family:'Cinzel',serif;font-size:11px;color:rgba(245,237,216,.6);transition:all .2s}
+.lobby-custom-row{margin-top:7px}
+.lobby-custom-row input{font-size:14px;padding:7px 12px}
 .chip-preset:hover,.chip-preset.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.1)}
 .bonus-payout-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .bonus-payout-row{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.25);border:1px solid rgba(160,80,200,.15);border-radius:4px;padding:5px 8px}
@@ -160,11 +162,10 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
 .chip{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:6px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.2);box-shadow:0 1px 3px rgba(0,0,0,.5);transition:transform .15s;user-select:none;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);position:relative}
 .chip::before{content:'';position:absolute;inset:2px;border-radius:50%;border:1px dashed rgba(255,255,255,.2)}
 .chip:hover{transform:translateY(-2px) scale(1.1)}
-.chip-1{background:radial-gradient(circle at 35% 35%,#b0b0b0,#505050)}
-.chip-5{background:radial-gradient(circle at 35% 35%,#e05050,#8a1010)}
-.chip-25{background:radial-gradient(circle at 35% 35%,#4090e0,#1040a0)}
-.chip-100{background:radial-gradient(circle at 35% 35%,#303030,#080808)}
-.chip-500{background:radial-gradient(circle at 35% 35%,#6040d0,#2010a0)}
+.chip-025{background:radial-gradient(circle at 35% 35%,#d0d0d0,#888888)}
+.chip-1{background:radial-gradient(circle at 35% 35%,#e05050,#8a1010)}
+.chip-5{background:radial-gradient(circle at 35% 35%,#4090e0,#1040a0)}
+.chip-25{background:radial-gradient(circle at 35% 35%,#303030,#080808)}
 .clear-btn{font-size:7px;padding:1px 4px;background:rgba(0,0,0,.3);border:1px solid rgba(192,57,43,.35);color:#f08080;border-radius:3px;cursor:pointer;font-family:'Cinzel',serif}
 .bonus-row{display:flex;align-items:center;gap:2px;flex-wrap:wrap;padding:2px 5px;background:rgba(160,80,200,.07);border:1px solid rgba(160,80,200,.2);border-radius:3px}
 .bonus-row-lbl{font-family:'Cinzel',serif;font-size:6px;letter-spacing:.5px;text-transform:uppercase;color:#c080f0}
@@ -326,11 +327,14 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
     <div id="host-tab" class="tab-content active">
       <div class="form-group"><label>Your Name</label><input type="text" id="host-name" placeholder="Enter your name" maxlength="20"></div>
       <div class="form-group"><label>Starting Chips</label>
-        <div class="chip-presets">
-          <div class="chip-preset active" onclick="selectChips(this,500)">500</div>
-          <div class="chip-preset" onclick="selectChips(this,1000)">1,000</div>
-          <div class="chip-preset" onclick="selectChips(this,2000)">2,000</div>
-          <div class="chip-preset" onclick="selectChips(this,5000)">5,000</div>
+        <div class="chip-presets" id="chips-presets">
+          <div class="chip-preset active" onclick="selectChips(this,20)">$20</div>
+          <div class="chip-preset" onclick="selectChips(this,50)">$50</div>
+          <div class="chip-preset" onclick="selectChips(this,100)">$100</div>
+          <div class="chip-preset" onclick="selectChips(this,200)">$200</div>
+        </div>
+        <div class="lobby-custom-row">
+          <input type="number" id="chips-custom" placeholder="Or enter amount…" min="1" step="0.25" oninput="selectChipsCustom(this.value)">
         </div>
       </div>
       <div class="form-group"><label>🎰 Bonus Bet Payouts</label>
@@ -351,9 +355,12 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
       <div class="form-group"><label>🎱 Bonus Pool Contribution (per player)</label>
         <div class="chip-presets" id="pool-presets">
           <div class="chip-preset active" onclick="selectPool(this,0)">None</div>
-          <div class="chip-preset" onclick="selectPool(this,25)">25</div>
-          <div class="chip-preset" onclick="selectPool(this,50)">50</div>
-          <div class="chip-preset" onclick="selectPool(this,100)">100</div>
+          <div class="chip-preset" onclick="selectPool(this,0.25)">$0.25</div>
+          <div class="chip-preset" onclick="selectPool(this,0.50)">$0.50</div>
+          <div class="chip-preset" onclick="selectPool(this,1)">$1</div>
+        </div>
+        <div class="lobby-custom-row">
+          <input type="number" id="pool-custom" placeholder="Or enter amount…" min="0" step="0.25" oninput="selectPoolCustom(this.value)">
         </div>
       </div>
       <div style="display:flex;gap:10px;justify-content:center"><button class="btn btn-primary btn-lg" onclick="hostGame()">Create Room</button></div>
@@ -459,10 +466,9 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
     <div class="buyin-title">Buy In</div>
     <div class="buyin-sub" id="buyin-sub"></div>
     <div class="buyin-presets">
-      <div class="buyin-preset" onclick="doBuyIn(250)">250</div>
-      <div class="buyin-preset" onclick="doBuyIn(500)">500</div>
-      <div class="buyin-preset" onclick="doBuyIn(1000)">1,000</div>
-      <div class="buyin-preset" onclick="doBuyIn(2000)">2,000</div>
+      <div class="buyin-preset" onclick="doBuyIn(10)">$10</div>
+      <div class="buyin-preset" onclick="doBuyIn(20)">$20</div>
+      <div class="buyin-preset" onclick="doBuyIn(50)">$50</div>
     </div>
     <div class="buyin-custom-row">
       <input type="number" id="buyin-custom" placeholder="Custom amount" min="1">
@@ -487,7 +493,7 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
 // STATE
 // ═══════════════════════════════════════════
 const socket = io();
-let myId = socket.id, roomCode = null, gameState = null, startingChips = 500, poolContribution = 0;
+let myId = socket.id, roomCode = null, gameState = null, startingChips = 20, poolContribution = 0;
 let tempHigh = [], tempLow = [], pendingJoinName = null;
 
 // FIX 1: banker check is purely socket-id vs bankerId from server
@@ -675,13 +681,29 @@ function switchTab(a, b, el) {
 }
 function selectChips(el, v) {
   startingChips = v;
-  document.querySelectorAll('#host-tab .chip-presets:first-of-type .chip-preset').forEach(e => e.classList.remove('active'));
-  el.classList.add('active');
+  document.querySelectorAll('#chips-presets .chip-preset').forEach(e => e.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('chips-custom').value = '';
+}
+function selectChipsCustom(v) {
+  const n = parseFloat(v);
+  if (!isNaN(n) && n > 0) {
+    startingChips = n;
+    document.querySelectorAll('#chips-presets .chip-preset').forEach(e => e.classList.remove('active'));
+  }
 }
 function selectPool(el, v) {
   poolContribution = v;
   document.querySelectorAll('#pool-presets .chip-preset').forEach(e => e.classList.remove('active'));
-  el.classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('pool-custom').value = '';
+}
+function selectPoolCustom(v) {
+  const n = parseFloat(v);
+  if (!isNaN(n) && n >= 0) {
+    poolContribution = n;
+    document.querySelectorAll('#pool-presets .chip-preset').forEach(e => e.classList.remove('active'));
+  }
 }
 function getBP() {
   const g = id => parseInt(document.getElementById(id).value) || 0;
@@ -994,23 +1016,39 @@ function cHTML(card, sf, x='') {
   const c=(card.suit==='♥'||card.suit==='♦')?'red':'black';
   return `<div class="card ${c}${x}"><div class="card-rank">${card.rank}</div><div class="card-suit">${card.suit}</div></div>`;
 }
-function fmtChip(n){return n>=1000?(n/1000).toFixed(n%1000===0?0:1)+'k':String(n);}
+function fmtChip(n){if(n==null)return'$0';if(n<1&&n>0)return`¢${Math.round(n*100)}`;return`$${Number.isInteger(n)?n:n.toFixed(2)}`; }
+
+const MAIN_BET_CAP  = 3;
+const BONUS_BET_CAP = 0.25;
+const CHIP_DENOMS   = [0.25, 1, 5, 25];
+const CHIP_CLASSES  = {0.25:'chip-025', 1:'chip-1', 5:'chip-5', 25:'chip-25'};
+
+function chipBtn(denom, fn, remaining) {
+  if (denom > remaining + 0.001) return ''; // won't fit
+  const cls = CHIP_CLASSES[denom] || 'chip-1';
+  const lbl = denom < 1 ? `¢${denom*100|0}` : `$${denom}`;
+  return `<div class="chip ${cls}" onclick="${fn}(${denom})">${lbl}</div>`;
+}
 
 function renderBetUI(p) {
-  const av=p.chips-p.bonusBet, avb=p.chips-p.bet-p.bonusBet;
-  const cb=(max,fn)=>[1,5,25,100,500].filter(v=>max>=v).map(v=>`<div class="chip chip-${v}" onclick="${fn}(${v})">${v}</div>`).join('');
+  const mainRemain  = Math.max(0, Math.min(MAIN_BET_CAP  - p.bet,  p.chips - p.bonusBet));
+  const bonusRemain = Math.max(0, Math.min(BONUS_BET_CAP - p.bonusBet, p.chips - p.bet));
+  const mainChips   = CHIP_DENOMS.map(d => chipBtn(d, 'placeBet',      mainRemain)).join('');
+  const bonusChips  = CHIP_DENOMS.map(d => chipBtn(d, 'placeBonusBet', bonusRemain)).join('');
+  const betLbl = p.bet > 0 ? `$${p.bet.toFixed(2).replace(/\.00$/,'')}` : '$0';
+  const bonLbl = p.bonusBet > 0 ? `$${p.bonusBet.toFixed(2).replace(/\.00$/,'')}` : '$0';
   return `<div class="bet-ui">
-    <div class="bet-section-lbl">Main Bet</div>
+    <div class="bet-section-lbl">Main Bet <span style="opacity:.45;font-size:7px">(max $${MAIN_BET_CAP})</span></div>
     <div class="bet-row">
-      <div class="bet-lbl"><span class="val">${p.bet}</span></div>
-      <div class="chip-stack">${cb(av,'placeBet')}</div>
+      <div class="bet-lbl"><span class="val">${betLbl}</span></div>
+      <div class="chip-stack">${mainChips}</div>
       ${p.bet>0?`<button class="clear-btn" onclick="clearBet()">✕</button>`:''}
       <button class="btn btn-sm" style="font-size:8px;padding:2px 6px" onclick="doFold()">${p.folded?'Unfold':'Fold'}</button>
     </div>
-    <div class="bet-section-lbl" style="color:#c080f0">Bonus Bet 🎰</div>
+    <div class="bet-section-lbl" style="color:#c080f0">Bonus Bet 🎰 <span style="opacity:.45;font-size:7px">(max $${BONUS_BET_CAP})</span></div>
     <div class="bonus-row" style="border:none;padding:0;background:none">
-      <div class="bet-lbl"><span class="val" style="color:#e0a8ff">${p.bonusBet}</span></div>
-      <div class="chip-stack">${cb(avb,'placeBonusBet')}</div>
+      <div class="bet-lbl"><span class="val" style="color:#e0a8ff">${bonLbl}</span></div>
+      <div class="chip-stack">${bonusChips}</div>
       ${p.bonusBet>0?`<button class="clear-btn" onclick="clearBonusBet()">✕</button>`:''}
     </div>
   </div>`;
@@ -1173,10 +1211,10 @@ function doFold(){const me=gameState&&gameState.players.find(p=>p.id===myId);soc
 // ═══════════════════════════════════════════
 function openBuyIn(){
   const me=getMe();
-  const headroom=Math.max(0,10000-me.chips);
+  const headroom=Math.max(0,500-me.chips);
   const insolvent=gameState&&gameState.bankerInsolvent&&amIBanker();
   const extra=insolvent?` · owes ${gameState.pendingBankerDelta||'?'} to winners`:'';
-  document.getElementById('buyin-sub').textContent=`${me.name} · ${me.chips} chips · up to ${headroom} more${extra}`;
+  document.getElementById('buyin-sub').textContent=`${me.name} · $${me.chips} · up to $${headroom} more${extra}`;
   document.getElementById('buyin-custom').value='';
   document.getElementById('buyin-modal').classList.add('open');
 }

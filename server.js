@@ -685,8 +685,8 @@ function settleRound(room) {
     g.pendingBankerDelta = 0;
     g.players.forEach((p, idx) => {
       if (idx === g.bankerIdx || p.folded || p.bet === 0) return;
-      p.chips += p.netChips;
-      banker.chips -= p.netChips;
+      p.chips    = Math.round((p.chips    + p.netChips) * 100) / 100;
+      banker.chips = Math.round((banker.chips - p.netChips) * 100) / 100;
     });
   }
 
@@ -880,10 +880,11 @@ io.on('connection', (socket) => {
     if (!p || p.folded || p.poolBlocked) return;
     const idx = g.players.indexOf(p);
     if (idx === g.bankerIdx) return;
-    const available = p.chips - p.bonusBet;
-    const add = Math.min(amount, available - p.bet);
-    if (add <= 0) return;
-    p.bet += add;
+    const MAX_MAIN_BET = 3;
+    const available = Math.min(p.chips - p.bonusBet, MAX_MAIN_BET - p.bet);
+    const add = Math.min(amount, available);
+    if (add <= 0.001) return;
+    p.bet = Math.round((p.bet + add) * 100) / 100;
     broadcastState(code);
   });
 
@@ -903,10 +904,11 @@ io.on('connection', (socket) => {
     if (!p || p.folded || p.poolBlocked) return;
     const idx = g.players.indexOf(p);
     if (idx === g.bankerIdx) return;
-    const available = p.chips - p.bet - p.bonusBet;
+    const MAX_BONUS_BET = 0.25;
+    const available = Math.min(p.chips - p.bet, MAX_BONUS_BET - p.bonusBet);
     const add = Math.min(amount, available);
-    if (add <= 0) return;
-    p.bonusBet += add;
+    if (add <= 0.001) return;
+    p.bonusBet = Math.round((p.bonusBet + add) * 100) / 100;
     broadcastState(code);
   });
 
@@ -1056,7 +1058,7 @@ io.on('connection', (socket) => {
     const p = g.players.find(p => p.id === socket.id);
     if (!p || amount < 1) return;
     // Cap at 10,000
-    const headroom = Math.max(0, 10000 - p.chips);
+    const headroom = Math.max(0, 500 - p.chips);
     const actual = Math.min(amount, headroom);
     if (actual <= 0) { return; } // already at cap
     p.chips += actual;
@@ -1077,8 +1079,8 @@ io.on('connection', (socket) => {
         // Banker can now cover — execute suspended transfers
         g.players.forEach((pl, idx) => {
           if (idx === g.bankerIdx || pl.folded || pl.bet === 0 || pl.result === null) return;
-          pl.chips += pl.netChips;
-          banker.chips -= pl.netChips;
+          pl.chips     = Math.round((pl.chips     + pl.netChips) * 100) / 100;
+          banker.chips = Math.round((banker.chips - pl.netChips) * 100) / 100;
         });
         g.bankerInsolvent = false;
         g.pendingBankerDelta = 0;
