@@ -92,8 +92,8 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
 .phase-done{background:rgba(192,57,43,.2);border:1px solid #c0392b;color:#f08080}
 .phase-lobby{background:rgba(128,128,128,.2);border:1px solid #888;color:#bbb}
 .header-right{display:flex;gap:6px;margin-left:auto}
-.table-wrap{flex:1;overflow:hidden;position:relative;padding:4px}
-.casino-table{position:absolute;inset:4px;background:radial-gradient(ellipse at 50% 38%,#2a7a48 0%,#1e6038 25%,#145028 55%,#0a2a18 80%,#061508 100%);border-radius:50%/42%;border:8px solid #1a0e04;box-shadow:0 0 0 3px #2a1a08,0 0 0 5px #0f0a04,inset 0 0 60px rgba(0,0,0,.5),0 8px 40px rgba(0,0,0,.9);overflow:visible}
+.table-wrap{flex:1;overflow:auto;position:relative;padding:4px;scroll-behavior:smooth}
+.casino-table{position:absolute;inset:4px;background:radial-gradient(ellipse at 50% 38%,#2a7a48 0%,#1e6038 25%,#145028 55%,#0a2a18 80%,#061508 100%);border-radius:50%/42%;border:8px solid #1a0e04;box-shadow:0 0 0 3px #2a1a08,0 0 0 5px #0f0a04,inset 0 0 60px rgba(0,0,0,.5),0 8px 40px rgba(0,0,0,.9);overflow:visible;min-height:320px}
 .casino-table::before{content:'';position:absolute;inset:8px;border:2px solid rgba(201,168,76,.12);border-radius:50%/42%;pointer-events:none;z-index:0}
 .felt-watermark{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);font-family:'Cinzel Decorative',serif;font-size:clamp(10px,1.6vw,18px);color:rgba(201,168,76,.055);letter-spacing:5px;text-transform:uppercase;pointer-events:none;white-space:nowrap;z-index:0}
 .ace-push-banner{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);background:rgba(15,10,0,.88);border:1px solid var(--gold-d);border-radius:6px;padding:6px 16px;text-align:center;font-family:'Cinzel',serif;font-size:9px;color:var(--gold);letter-spacing:1.5px;z-index:10;pointer-events:none;white-space:nowrap;box-shadow:0 0 20px rgba(201,168,76,.3)}
@@ -153,6 +153,7 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
 .bet-ui{display:flex;flex-direction:column;gap:2px;width:100%;margin-top:2px}
 .bet-row{display:flex;align-items:center;gap:2px;flex-wrap:wrap}
 .bet-lbl{font-family:'Cinzel',serif;font-size:8px;min-width:28px;white-space:nowrap}
+.bet-section-lbl{font-family:'Cinzel',serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:rgba(201,168,76,.55);margin-top:3px;margin-bottom:1px}
 .bet-lbl .val{color:#f0d080;font-weight:600}
 .chip-stack{display:flex;gap:2px;align-items:center}
 .chip{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:6px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.2);box-shadow:0 1px 3px rgba(0,0,0,.5);transition:transform .15s;user-select:none;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);position:relative}
@@ -284,9 +285,31 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
 /* TOAST */
 #toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(0,0,0,.9);border:1px solid var(--gold-d);color:var(--cream);font-family:'Cinzel',serif;font-size:11px;padding:8px 18px;border-radius:20px;opacity:0;transition:all .3s;z-index:600;letter-spacing:.5px;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* INTRO SPLASH */
+#intro-splash{position:fixed;inset:0;z-index:9999;background:#030804;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  transition:opacity .8s ease}
+#intro-splash.fade-out{opacity:0;pointer-events:none}
+.intro-presents{font-family:'Cinzel',serif;font-size:clamp(10px,2.5vw,13px);
+  letter-spacing:5px;text-transform:uppercase;color:rgba(201,168,76,.45);
+  opacity:0;animation:intro-fade-in .8s ease .4s forwards}
+.intro-studio{font-family:'Cinzel Decorative',serif;font-size:clamp(20px,6vw,38px);
+  color:var(--gold);text-align:center;text-shadow:0 0 40px rgba(201,168,76,.5),0 0 80px rgba(201,168,76,.2);
+  opacity:0;animation:intro-fade-in 1s ease 1s forwards;letter-spacing:2px;line-height:1.3}
+.intro-divider{width:120px;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.4),transparent);
+  opacity:0;animation:intro-fade-in .6s ease 1.6s forwards}
+@keyframes intro-fade-in{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
 </style>
 </head>
 <body>
+<!-- INTRO SPLASH -->
+<div id="intro-splash">
+  <div class="intro-presents">Presents</div>
+  <div class="intro-studio">Core Four<br>Entertainment</div>
+  <div class="intro-divider"></div>
+</div>
+
 <div id="app">
 
 <!-- LOBBY -->
@@ -400,7 +423,7 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
   <div id="setter-banner"></div>
   <div id="banker-strip" class="banker-strip" style="display:none"></div>
   <div class="setter-body">
-    <div class="setter-instr">All 7 cards start in High Hand · Tap a card to move it · Tap Low Hand card to return it</div>
+    <div class="setter-instr">Arrange your cards freely · Tap High Hand card → Low Hand · Tap Low Hand card → return<br><span style="color:rgba(201,168,76,.5);font-size:11px;font-style:italic">You may arrange while waiting · Confirm unlocks once Banker sets</span></div>
     <div class="target-ind" id="target-ind">▶ Move 2 cards to Low Hand</div>
     <div class="setter-hands">
       <div class="setter-hand active-target" id="high-hand-box">
@@ -763,6 +786,25 @@ function renderGame(state) {
   renderArcSpots(state);
   renderControls(state);
   updatePhaseBadge(state.phase);
+  // CHANGE 1: scroll table-wrap to center player spot during bet/set
+  centerOnMySpot(state);
+}
+
+function centerOnMySpot(state) {
+  const wrap = document.getElementById('casino-table').parentElement;
+  if (!state || (state.phase !== 'bet' && state.phase !== 'set')) {
+    wrap.scrollTop = 0; return;
+  }
+  const me = getMe();
+  if (!me) return;
+  // Player spot is rendered at bottom-center of the oval (th*0.88)
+  // Scroll so that point is centered in the visible area
+  const tbl = document.getElementById('casino-table');
+  const th = tbl.offsetHeight || 400;
+  const spotY = th * 0.88; // approximate y of player spot
+  const wrapH = wrap.clientHeight;
+  const target = spotY - wrapH * 0.62; // put spot at ~62% from top of viewport
+  wrap.scrollTop = Math.max(0, target);
 }
 
 function renderArcSpots(state) {
@@ -957,14 +999,15 @@ function renderBetUI(p) {
   const av=p.chips-p.bonusBet, avb=p.chips-p.bet-p.bonusBet;
   const cb=(max,fn)=>[1,5,25,100,500].filter(v=>max>=v).map(v=>`<div class="chip chip-${v}" onclick="${fn}(${v})">${v}</div>`).join('');
   return `<div class="bet-ui">
+    <div class="bet-section-lbl">Main Bet</div>
     <div class="bet-row">
-      <div class="bet-lbl">Bet:<span class="val">${p.bet}</span></div>
+      <div class="bet-lbl"><span class="val">${p.bet}</span></div>
       <div class="chip-stack">${cb(av,'placeBet')}</div>
       ${p.bet>0?`<button class="clear-btn" onclick="clearBet()">✕</button>`:''}
       <button class="btn btn-sm" style="font-size:8px;padding:2px 6px" onclick="doFold()">${p.folded?'Unfold':'Fold'}</button>
     </div>
-    <div class="bonus-row">
-      <span class="bonus-row-lbl">🎰</span>
+    <div class="bet-section-lbl" style="color:#c080f0">Bonus Bet 🎰</div>
+    <div class="bonus-row" style="border:none;padding:0;background:none">
       <div class="bet-lbl"><span class="val" style="color:#e0a8ff">${p.bonusBet}</span></div>
       <div class="chip-stack">${cb(avb,'placeBonusBet')}</div>
       ${p.bonusBet>0?`<button class="clear-btn" onclick="clearBonusBet()">✕</button>`:''}
@@ -1048,7 +1091,7 @@ function updateSetterBanner(state) {
   if (ib) {
     bannerEl.innerHTML = '<div class="banner-banker-prompt">🎩 You are the Banker — set your hand first before players can confirm</div>';
   } else if (banker && !banker.handSet) {
-    bannerEl.innerHTML = '<div class="banner-wait">⏳ Waiting for Banker to set their hand first…</div>';
+    bannerEl.innerHTML = '<div class="banner-wait">⏳ Arrange your cards freely — Confirm unlocks once Banker sets their hand</div>';
   } else {
     bannerEl.innerHTML = '';
   }
@@ -1228,6 +1271,16 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 document.getElementById('join-code').addEventListener('input',function(){this.value=this.value.toUpperCase();});
 let resizeTimer;
 window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(gameState&&gameState.phase!=='lobby')renderGame(gameState);},150);});
+
+// CHANGE 4 — Intro splash
+(function() {
+  const splash = document.getElementById('intro-splash');
+  if (!splash) return;
+  setTimeout(() => {
+    splash.classList.add('fade-out');
+    setTimeout(() => { splash.style.display = 'none'; }, 850);
+  }, 2800);
+})();
 </script>
 </body>
 </html>
