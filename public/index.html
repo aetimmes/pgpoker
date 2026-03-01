@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=yes">
 <title>Pai Gow Poker</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <script src="/socket.io/socket.io.js"></script>
 <style>
 :root{--gold:#c9a84c;--gold-l:#f0d080;--gold-d:#8a6a20;--cream:#f5edd8;--shadow:0 8px 32px rgba(0,0,0,.65);--glow:0 0 18px rgba(201,168,76,.4)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;background:#060a06}
+html,body{height:100%;overflow-x:hidden;overflow-y:hidden;background:#060a06}
 body{font-family:'EB Garamond',serif;color:var(--cream)}
-#app{display:flex;flex-direction:column;height:100vh}
+#app{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
 .btn{font-family:'Cinzel',serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:7px 14px;border:1px solid var(--gold-d);background:linear-gradient(180deg,#2a1f08,#1a1208);color:var(--gold);cursor:pointer;border-radius:3px;transition:all .2s;white-space:nowrap}
 .btn:hover{background:linear-gradient(180deg,#3a2a0a,#2a1f08);border-color:var(--gold);color:var(--gold-l);box-shadow:var(--glow)}
 .btn-primary{background:linear-gradient(180deg,#b8922a,#8a6a18);border-color:var(--gold);color:#fff;font-weight:700}
@@ -25,10 +25,11 @@ body{font-family:'EB Garamond',serif;color:var(--cream)}
 .btn-locked{background:rgba(40,40,40,.5);border:1px solid #444;color:#555;font-family:'Cinzel',serif;font-size:13px;padding:10px 24px;border-radius:3px;text-transform:uppercase;letter-spacing:1px;cursor:not-allowed}
 .screen{display:none;flex-direction:column;flex:1;overflow:hidden}
 .screen.active{display:flex}
+.screen.scrollable{overflow-y:auto;-webkit-overflow-scrolling:touch}
 
 /* LOBBY */
-#lobby-screen{align-items:center;justify-content:center;padding:16px;overflow-y:auto;background:radial-gradient(ellipse at 50% 0%,#2a6040,transparent 60%),#0d1a0a}
-.lobby-box{background:linear-gradient(160deg,#0f2a18,#0a1a0f);border:1px solid var(--gold-d);border-radius:8px;padding:28px;width:100%;max-width:500px;box-shadow:var(--shadow);position:relative}
+#lobby-screen{align-items:center;justify-content:flex-start;padding:20px 16px 60px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:radial-gradient(ellipse at 50% 0%,#2a6040,transparent 60%),#0d1a0a}
+.lobby-box{background:linear-gradient(160deg,#0f2a18,#0a1a0f);border:1px solid var(--gold-d);border-radius:8px;padding:28px 28px 40px;width:100%;max-width:500px;box-shadow:var(--shadow);position:relative;margin:auto 0}
 .lobby-box::before{content:'';position:absolute;inset:4px;border:1px solid rgba(201,168,76,.1);border-radius:5px;pointer-events:none}
 .logo-title{font-family:'Cinzel Decorative',serif;font-size:22px;color:var(--gold);text-align:center;text-shadow:0 0 20px rgba(201,168,76,.5);margin-bottom:4px}
 .logo-sub{font-size:13px;color:rgba(245,237,216,.4);text-align:center;font-style:italic;margin-bottom:22px}
@@ -60,7 +61,7 @@ input:focus{border-color:var(--gold)}
 .join-code-row input{flex:1;text-transform:uppercase;letter-spacing:4px;font-size:20px;text-align:center}
 
 /* SEAT PICKER */
-#seat-screen{align-items:center;justify-content:center;padding:16px;background:radial-gradient(ellipse at 50% 0%,#2a6040,transparent 60%),#0d1a0a}
+#seat-screen{align-items:center;justify-content:flex-start;padding:20px 16px 60px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:radial-gradient(ellipse at 50% 0%,#2a6040,transparent 60%),#0d1a0a}
 .seat-screen-title{font-family:'Cinzel Decorative',serif;font-size:18px;color:var(--gold);text-align:center;margin-bottom:6px}
 .seat-screen-sub{font-size:12px;color:rgba(245,237,216,.45);text-align:center;font-style:italic;margin-bottom:18px}
 .seat-table-wrap{position:relative;width:min(480px,90vw);height:min(340px,60vw);margin:0 auto}
@@ -293,20 +294,20 @@ header{background:linear-gradient(180deg,#0d0d0d,#1a1208);border-bottom:2px soli
 #intro-splash.fade-out{opacity:0;pointer-events:none}
 .intro-presents{font-family:'Cinzel',serif;font-size:clamp(10px,2.5vw,13px);
   letter-spacing:5px;text-transform:uppercase;color:rgba(201,168,76,.45);
-  opacity:0;animation:intro-fade-in .8s ease .4s forwards}
+  opacity:0;animation:intro-fade-in .8s ease 1.1s forwards}
 .intro-studio{font-family:'Cinzel Decorative',serif;font-size:clamp(20px,6vw,38px);
   color:var(--gold);text-align:center;text-shadow:0 0 40px rgba(201,168,76,.5),0 0 80px rgba(201,168,76,.2);
-  opacity:0;animation:intro-fade-in 1s ease 1s forwards;letter-spacing:2px;line-height:1.3}
+  opacity:0;animation:intro-fade-in 1s ease .3s forwards;letter-spacing:2px;line-height:1.3}
 .intro-divider{width:120px;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.4),transparent);
-  opacity:0;animation:intro-fade-in .6s ease 1.6s forwards}
+  opacity:0;animation:intro-fade-in .6s ease 1.8s forwards}
 @keyframes intro-fade-in{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
 </style>
 </head>
 <body>
 <!-- INTRO SPLASH -->
 <div id="intro-splash">
-  <div class="intro-presents">Presents</div>
   <div class="intro-studio">Core Four<br>Entertainment</div>
+  <div class="intro-presents">Presents</div>
   <div class="intro-divider"></div>
 </div>
 
