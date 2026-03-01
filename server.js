@@ -561,6 +561,7 @@ function safeState(room, forSocketId) {
     bonusPayouts: g.bonusPayouts,
     houseBonus: g.houseBonus,
     bankerAceHighPush: g.bankerAceHighPush || false,
+    bankerId: g.players[g.bankerIdx] ? g.players[g.bankerIdx].id : null,
     dealOrderNum: g.dealOrderNum || null,
     players: g.players.map(p => {
       const isMe = p.id === forSocketId;
@@ -689,6 +690,11 @@ function settleRound(room) {
   // Mark banker as revealed immediately
   g.players[g.bankerIdx].revealed = true;
   g.phase = 'done';
+}
+
+// ─── BANKER AUTH HELPER ──────────────────────────────────────────────────────
+function isCurrentBanker(g, socketId) {
+  return g && g.players[g.bankerIdx] && g.players[g.bankerIdx].id === socketId;
 }
 
 // ─── SOCKET EVENTS ───────────────────────────────────────────────────────────
@@ -835,10 +841,10 @@ io.on('connection', (socket) => {
     if (p && p.chips > 0) { p.folded = false; broadcastState(code); }
   });
 
-  // Deal (host only)
+  // Deal (current banker only)
   socket.on('deal', ({ code }) => {
     const g = rooms[code];
-    if (!g || g.hostId !== socket.id || g.phase !== 'bet') return;
+    if (!g || !isCurrentBanker(g, socket.id) || g.phase !== 'bet') return;
     const nonBankers = g.players.filter((p, i) => i !== g.bankerIdx && !p.folded);
     const bettors = nonBankers.filter(p => p.bet > 0);
     if (bettors.length === 0) { socket.emit('error', 'At least one player must bet'); return; }
@@ -898,10 +904,10 @@ io.on('connection', (socket) => {
     socket.emit('houseWaySuggestion', { high, low });
   });
 
-  // Reveal (host manually triggers if needed)
+  // Reveal (current banker only)
   socket.on('reveal', ({ code }) => {
     const g = rooms[code];
-    if (!g || g.hostId !== socket.id || g.phase !== 'set') return;
+    if (!g || !isCurrentBanker(g, socket.id) || g.phase !== 'set') return;
     const needToSet = g.players.filter((p, i) => i === g.bankerIdx ? p.hand.length > 0 : !p.folded && p.bet > 0);
     const unset = needToSet.filter(p => !p.handSet).map(p => p.name);
     if (unset.length > 0) { socket.emit('error', `${unset.join(', ')} haven't set their hand yet`); return; }
@@ -909,10 +915,10 @@ io.on('connection', (socket) => {
     broadcastState(code);
   });
 
-  // Next round
+  // Next round (current banker only)
   socket.on('nextRound', ({ code }) => {
     const g = rooms[code];
-    if (!g || g.hostId !== socket.id || g.phase !== 'done') return;
+    if (!g || !isCurrentBanker(g, socket.id) || g.phase !== 'done') return;
     g.players.forEach(p => {
       p.bet = 0; p.bonusBet = 0;
       p.hand = []; p.highHand = []; p.lowHand = [];
@@ -930,10 +936,10 @@ io.on('connection', (socket) => {
     broadcastState(code);
   });
 
-  // Rotate banker
+  // Rotate banker (current banker only, bet phase only)
   socket.on('rotateBanker', ({ code }) => {
     const g = rooms[code];
-    if (!g || g.hostId !== socket.id || g.phase !== 'bet') return;
+    if (!g || !isCurrentBanker(g, socket.id) || g.phase !== 'bet') return;
     g.bankerIdx = (g.bankerIdx + 1) % g.players.length;
     broadcastState(code);
   });
@@ -949,10 +955,10 @@ io.on('connection', (socket) => {
     broadcastState(code);
   });
 
-  // Advance reveal — host clicks to flip next player's cards
+  // Advance reveal — current banker clicks to flip next player's cards
   socket.on('advanceReveal', ({ code }) => {
     const g = rooms[code];
-    if (!g || g.phase !== 'done') return;
+    if (!g || !isCurrentBanker(g, socket.id) || g.phase !== 'done') return;
     // Build ordered list of non-banker active players in seat order
     const activePlayers = g.players
       .map((p, i) => ({ p, i }))
