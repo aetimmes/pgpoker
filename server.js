@@ -1033,7 +1033,14 @@ io.on('connection', (socket) => {
       p.bonusNet = null; p.bonusLabel = ''; p.bonusWon = false;
       p.revealed = false;
     });
-    g.bankerIdx = (g.bankerIdx + 1) % g.players.length;
+    // Rotate banker, skipping any disconnected players
+    const playerCount = g.players.length;
+    let next = (g.bankerIdx + 1) % playerCount;
+    for (let i = 0; i < playerCount; i++) {
+      if (!g.players[next].disconnected) break;
+      next = (next + 1) % playerCount;
+    }
+    g.bankerIdx = next;
     g.round++;
     g.revealStep = -1;
     g.dealOrderNum = null;
@@ -1120,33 +1127,34 @@ io.on('connection', (socket) => {
         if (g.players.length === 0) { delete rooms[code]; break; }
         if (g.hostId === socket.id) g.hostId = g.players[0].id;
       } else {
-        // Mark disconnected, hold seat for 60 seconds then release
-        g.players[idx].folded = true;
-        g.players[idx].bet = 0;
-        g.players[idx].disconnected = true;
-        g.players[idx].seatReleaseTimer = setTimeout(() => {
-          const stillThere = g.players.findIndex(p => p.id === socket.id);
+        const p = g.players[idx];
+        // Mark disconnected, fold any active bet, hold seat for 15 minutes
+        p.folded = true;
+        p.bet = 0;
+        p.disconnected = true;
+        p.seatReleaseTimer = setTimeout(() => {
+          const stillThere = g.players.findIndex(pl => pl.id === socket.id);
           if (stillThere !== -1 && g.players[stillThere].disconnected) {
             g.players.splice(stillThere, 1);
-            // Fix #2 — if removed player was banker, reassign
             if (g.bankerIdx >= g.players.length) g.bankerIdx = 0;
             broadcastState(code);
           }
-        }, 60000);
+        }, 900000); // 15 minute hold
 
-        // Fix #2 — if banker disconnects during set phase, reassign immediately
-        if (g.phase === 'set' && idx === g.bankerIdx) {
-          // Find next non-disconnected player
-          let newBanker = -1;
-          for (let i = 1; i <= g.players.length; i++) {
-            const ni = (idx + i) % g.players.length;
-            if (!g.players[ni].disconnected) { newBanker = ni; break; }
-          }
-          if (newBanker !== -1) {
-            g.bankerIdx = newBanker;
-            // Notify the new banker via their socket
-            io.to(g.players[newBanker].id).emit('bankerReassigned',
-              { message: 'Banker disconnected — you are now Banker' });
+        // If disconnecting during set phase and player has unset hand,
+        // auto-apply House Way so the round is never blocked.
+        // This covers both the banker and regular players.
+        if (g.phase === 'set' && p.hand.length > 0 && !p.handSet) {
+          const { high, low } = applyHouseWay(p.hand);
+          p.highHand = high;
+          p.lowHand  = low;
+          p.handSet  = true;
+          // Check if all active players are now set → settle
+          const needToSet = g.players.filter((pl, i) =>
+            i === g.bankerIdx ? pl.hand.length > 0 : !pl.folded && pl.bet > 0
+          );
+          if (needToSet.every(pl => pl.handSet)) {
+            settleRound(code);
           }
         }
       }
