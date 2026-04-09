@@ -854,6 +854,17 @@ io.on('connection', (socket) => {
     const g = rooms[code];
     if (!g || g.hostId !== socket.id) return;
     if (g.players.length < 2) { socket.emit('error', 'Need at least 2 players to start'); return; }
+
+    // Assign host an arc seat if they still have seatIndex: null
+    // (host bypasses seat picker, so we auto-assign the lowest free slot)
+    const host = g.players[0];
+    if (host.seatIndex === null || host.seatIndex === undefined) {
+      const takenSeats = new Set(g.players.map(p => p.seatIndex).filter(s => s !== null && s !== undefined));
+      for (let s = 0; s < 6; s++) {
+        if (!takenSeats.has(s)) { host.seatIndex = s; break; }
+      }
+    }
+
     // Fix #5 — collect initial bonus pool contributions from all players
     // Players who can't afford contribution are auto-folded (blocked)
     if (g.poolContribution > 0) {
